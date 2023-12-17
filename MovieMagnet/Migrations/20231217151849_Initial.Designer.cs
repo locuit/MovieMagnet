@@ -12,7 +12,7 @@ using Volo.Abp.EntityFrameworkCore;
 namespace MovieMagnet.Migrations
 {
     [DbContext(typeof(MovieMagnetDbContext))]
-    [Migration("20231209195601_Initial")]
+    [Migration("20231217151849_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -23,6 +23,214 @@ namespace MovieMagnet.Migrations
                 .HasAnnotation("_Abp_DatabaseProvider", EfCoreDatabaseProvider.MySql)
                 .HasAnnotation("ProductVersion", "7.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
+
+            modelBuilder.Entity("MovieMagnet.Genres.Genre", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Genres");
+                });
+
+            modelBuilder.Entity("MovieMagnet.Keywords.Keyword", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Keywords");
+                });
+
+            modelBuilder.Entity("MovieMagnet.Languages.Language", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Languages");
+                });
+
+            modelBuilder.Entity("MovieMagnet.MovieCompanies.MovieCompany", b =>
+                {
+                    b.Property<long>("MovieId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("CompanyId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("MovieId", "CompanyId");
+
+                    b.HasIndex("CompanyId");
+
+                    b.ToTable("MovieCompanies", (string)null);
+                });
+
+            modelBuilder.Entity("MovieMagnet.MovieCountries.MovieCountry", b =>
+                {
+                    b.Property<long>("MovieId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("CountryId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("MovieId", "CountryId");
+
+                    b.HasIndex("CountryId");
+
+                    b.ToTable("MovieCountries", (string)null);
+                });
+
+            modelBuilder.Entity("MovieMagnet.MovieGenres.MovieGenre", b =>
+                {
+                    b.Property<long>("MovieId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("GenreId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("MovieId", "GenreId");
+
+                    b.HasIndex("GenreId");
+
+                    b.ToTable("MovieGenres", (string)null);
+                });
+
+            modelBuilder.Entity("MovieMagnet.MovieKeywords.MovieKeyword", b =>
+                {
+                    b.Property<long>("MovieId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("KeywordId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("MovieId", "KeywordId");
+
+                    b.HasIndex("KeywordId");
+
+                    b.ToTable("MovieKeywords", (string)null);
+                });
+
+            modelBuilder.Entity("MovieMagnet.Movies.Movie", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("Budget")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("ImdbId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
+                    b.Property<string>("Overview")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("varchar(512)");
+
+                    b.Property<decimal>("Popularity")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("PosterPath")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("ReleaseDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("Revenue")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<decimal>("Runtime")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<decimal>("VoteAverage")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<int>("VoteCount")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ImdbId")
+                        .IsUnique();
+
+                    b.ToTable("Movies", (string)null);
+                });
+
+            modelBuilder.Entity("MovieMagnet.ProductionCompanies.ProductionCompany", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ProductionCompanies");
+                });
+
+            modelBuilder.Entity("MovieMagnet.ProductionCountries.ProductionCountry", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ProductionCountries");
+                });
 
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLog", b =>
                 {
@@ -1697,6 +1905,82 @@ namespace MovieMagnet.Migrations
                     b.ToTable("AbpTenantConnectionStrings", (string)null);
                 });
 
+            modelBuilder.Entity("MovieMagnet.MovieCompanies.MovieCompany", b =>
+                {
+                    b.HasOne("MovieMagnet.ProductionCompanies.ProductionCompany", "Company")
+                        .WithMany("MovieCompanies")
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MovieMagnet.Movies.Movie", "Movie")
+                        .WithMany("MovieCompanies")
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("Movie");
+                });
+
+            modelBuilder.Entity("MovieMagnet.MovieCountries.MovieCountry", b =>
+                {
+                    b.HasOne("MovieMagnet.ProductionCountries.ProductionCountry", "Country")
+                        .WithMany("MovieCountries")
+                        .HasForeignKey("CountryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MovieMagnet.Movies.Movie", "Movie")
+                        .WithMany("MovieCountries")
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Country");
+
+                    b.Navigation("Movie");
+                });
+
+            modelBuilder.Entity("MovieMagnet.MovieGenres.MovieGenre", b =>
+                {
+                    b.HasOne("MovieMagnet.Genres.Genre", "Genre")
+                        .WithMany("MovieGenres")
+                        .HasForeignKey("GenreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MovieMagnet.Movies.Movie", "Movie")
+                        .WithMany("MovieGenres")
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Genre");
+
+                    b.Navigation("Movie");
+                });
+
+            modelBuilder.Entity("MovieMagnet.MovieKeywords.MovieKeyword", b =>
+                {
+                    b.HasOne("MovieMagnet.Keywords.Keyword", "Keyword")
+                        .WithMany("MovieKeywords")
+                        .HasForeignKey("KeywordId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MovieMagnet.Movies.Movie", "Movie")
+                        .WithMany("MovieKeywords")
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Keyword");
+
+                    b.Navigation("Movie");
+                });
+
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLogAction", b =>
                 {
                     b.HasOne("Volo.Abp.AuditLogging.AuditLog", null)
@@ -1837,6 +2121,37 @@ namespace MovieMagnet.Migrations
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("MovieMagnet.Genres.Genre", b =>
+                {
+                    b.Navigation("MovieGenres");
+                });
+
+            modelBuilder.Entity("MovieMagnet.Keywords.Keyword", b =>
+                {
+                    b.Navigation("MovieKeywords");
+                });
+
+            modelBuilder.Entity("MovieMagnet.Movies.Movie", b =>
+                {
+                    b.Navigation("MovieCompanies");
+
+                    b.Navigation("MovieCountries");
+
+                    b.Navigation("MovieGenres");
+
+                    b.Navigation("MovieKeywords");
+                });
+
+            modelBuilder.Entity("MovieMagnet.ProductionCompanies.ProductionCompany", b =>
+                {
+                    b.Navigation("MovieCompanies");
+                });
+
+            modelBuilder.Entity("MovieMagnet.ProductionCountries.ProductionCountry", b =>
+                {
+                    b.Navigation("MovieCountries");
                 });
 
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLog", b =>

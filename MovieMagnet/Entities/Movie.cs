@@ -6,11 +6,12 @@ using MovieMagnet.MovieCountries;
 using MovieMagnet.MovieGenres;
 using MovieMagnet.MovieKeywords;
 using MovieMagnet.ProductionCompanies;
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Entities.Auditing;
 
 namespace MovieMagnet.Movies;
 
-public class Movie : AuditedAggregateRoot<long>
+public class Movie : Entity<long>
 {
     public decimal Budget { get; set; }
     public required string Title { get; set; } 

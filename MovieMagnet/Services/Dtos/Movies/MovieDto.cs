@@ -3,7 +3,7 @@ using Volo.Abp.Application.Dtos;
 
 namespace MovieMagnet.Services.Dtos;
 
-public class MovieDto : AuditedEntityDto<long>
+public class MovieDto : EntityDto<long>
 {
     public decimal Budget { get; set; }
     public string Title { get; set; } = null!;
