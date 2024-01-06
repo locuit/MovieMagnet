@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using MovieMagnet.MovieGenres;
-using Volo.Abp.Domain.Entities;
-using Volo.Abp.Domain.Entities.Auditing;
-
-namespace MovieMagnet.Genres;
+﻿using Volo.Abp.Domain.Entities;
+namespace MovieMagnet.Entities;
 
 
 public class Genre : Entity<long>

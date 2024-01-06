@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using MovieMagnet.MovieKeywords;
-using Volo.Abp.Domain.Entities;
-using Volo.Abp.Domain.Entities.Auditing;
+﻿using Volo.Abp.Domain.Entities;
 
-namespace MovieMagnet.Keywords;
+namespace MovieMagnet.Entities;
 
 public class Keyword : Entity<long>
 {

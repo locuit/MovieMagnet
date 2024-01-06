@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using MovieMagnet.MovieCompanies;
+﻿using MovieMagnet.Entities;
 using Volo.Abp.Domain.Entities;
-using Volo.Abp.Domain.Entities.Auditing;
 
-namespace MovieMagnet.ProductionCompanies;
+namespace MovieMagnet.Entities;
 
 public class ProductionCompany : Entity<long>
 {

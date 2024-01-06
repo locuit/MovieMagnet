@@ -1,9 +1,6 @@
-﻿using MovieMagnet.Genres;
-using MovieMagnet.Movies;
-using Volo.Abp.Domain.Entities;
-using Volo.Abp.Domain.Entities.Auditing;
+﻿using Volo.Abp.Domain.Entities;
 
-namespace MovieMagnet.MovieGenres;
+namespace MovieMagnet.Entities;
 
 public class MovieGenre : Entity<long>
 { 

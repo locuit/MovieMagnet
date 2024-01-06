@@ -1,9 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Dynamic.Core;
-using System.Threading.Tasks;
-using AutoMapper.Internal.Mappers;
-using MovieMagnet.Movies;
+﻿using System.Linq.Dynamic.Core;
+using MovieMagnet.Entities;
 using MovieMagnet.Services.Dtos;
 using MovieMagnet.Services.Dtos.Movies;
 using Volo.Abp.Application.Dtos;
@@ -81,7 +77,6 @@ public class MovieService : MovieMagnetAppService, IMovieService
             VoteAverage = movie.VoteAverage,
             VoteCount = movie.VoteCount,
         };
-
         return movieDto;
     }
 }

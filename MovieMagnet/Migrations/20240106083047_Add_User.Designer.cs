@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MovieMagnet.Data;
 using Volo.Abp.EntityFrameworkCore;
@@ -11,9 +12,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace MovieMagnet.Migrations
 {
     [DbContext(typeof(MovieMagnetDbContext))]
-    partial class MovieMagnetDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240106083047_Add_User")]
+    partial class AddUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -80,13 +83,16 @@ namespace MovieMagnet.Migrations
                         .HasColumnType("decimal(65,30)");
 
                     b.Property<string>("ImdbId")
+                        .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("Language")
+                        .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("varchar(32)");
 
                     b.Property<string>("Overview")
+                        .IsRequired()
                         .HasMaxLength(512)
                         .HasColumnType("varchar(512)");
 
@@ -96,7 +102,7 @@ namespace MovieMagnet.Migrations
                     b.Property<string>("PosterPath")
                         .HasColumnType("longtext");
 
-                    b.Property<DateTime?>("ReleaseDate")
+                    b.Property<DateTime>("ReleaseDate")
                         .HasColumnType("datetime(6)");
 
                     b.Property<decimal>("Revenue")
@@ -226,31 +232,6 @@ namespace MovieMagnet.Migrations
                     b.ToTable("ProductionCountries");
                 });
 
-            modelBuilder.Entity("MovieMagnet.Entities.Rating", b =>
-                {
-                    b.Property<long>("MovieId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint");
-
-                    b.Property<decimal>("Score")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<string>("Timestamp")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("MovieId", "UserId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Ratings", (string)null);
-                });
-
             modelBuilder.Entity("MovieMagnet.Entities.User", b =>
                 {
                     b.Property<long>("Id")
@@ -274,8 +255,8 @@ namespace MovieMagnet.Migrations
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasMaxLength(265)
-                        .HasColumnType("varchar(265)");
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
 
                     b.Property<string>("Username")
                         .IsRequired()
@@ -2036,25 +2017,6 @@ namespace MovieMagnet.Migrations
                     b.Navigation("Movie");
                 });
 
-            modelBuilder.Entity("MovieMagnet.Entities.Rating", b =>
-                {
-                    b.HasOne("MovieMagnet.Entities.Movie", "Movie")
-                        .WithMany("Ratings")
-                        .HasForeignKey("MovieId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MovieMagnet.Entities.User", "User")
-                        .WithMany("Ratings")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Movie");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLogAction", b =>
                 {
                     b.HasOne("Volo.Abp.AuditLogging.AuditLog", null)
@@ -2216,8 +2178,6 @@ namespace MovieMagnet.Migrations
                     b.Navigation("MovieGenres");
 
                     b.Navigation("MovieKeywords");
-
-                    b.Navigation("Ratings");
                 });
 
             modelBuilder.Entity("MovieMagnet.Entities.ProductionCompany", b =>
@@ -2228,11 +2188,6 @@ namespace MovieMagnet.Migrations
             modelBuilder.Entity("MovieMagnet.Entities.ProductionCountry", b =>
                 {
                     b.Navigation("MovieCountries");
-                });
-
-            modelBuilder.Entity("MovieMagnet.Entities.User", b =>
-                {
-                    b.Navigation("Ratings");
                 });
 
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLog", b =>

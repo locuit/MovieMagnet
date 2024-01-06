@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using MovieMagnet.Movies;
+using MovieMagnet.Entities;
 using MovieMagnet.Services.Dtos;
 
 namespace MovieMagnet.ObjectMapping;
@@ -10,5 +10,6 @@ public class MovieMagnetAutoMapperProfile : Profile
     {
         /* Create your AutoMapper object mappings here */
         CreateMap<Movie, MovieDto>();
+        CreateMap<User, UserDto>();
     }
 }
