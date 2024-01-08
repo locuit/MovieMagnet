@@ -1,9 +1,6 @@
-﻿using MovieMagnet.Movies;
-using MovieMagnet.ProductionCountries;
-using Volo.Abp.Domain.Entities;
-using Volo.Abp.Domain.Entities.Auditing;
+﻿using Volo.Abp.Domain.Entities;
 
-namespace MovieMagnet.MovieCountries;
+namespace MovieMagnet.Entities;
 
 public class MovieCountry : Entity<long>
 {

@@ -1,10 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Dynamic.Core;
-using System.Threading.Tasks;
-using AutoMapper.Internal.Mappers;
-using MovieMagnet.Movies;
-using MovieMagnet.Services.Dtos;
+﻿using System.Linq.Dynamic.Core;
+using MovieMagnet.Entities;
 using MovieMagnet.Services.Dtos.Movies;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Repositories;
@@ -32,9 +27,7 @@ public class MovieService : MovieMagnetAppService, IMovieService
             .Take(input.MaxResultCount);
 
         var movies = await AsyncExecuter.ToListAsync(queryable);
-        /// test tensorflow
         var hello = tf.constant("Hello, TensorFlow!");
-        /// end test tensorflow
         Console.WriteLine(hello);
         return new PagedResultDto<MovieDto>(
             queryable.Count(),

@@ -1,29 +1,30 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using MovieMagnet.MovieCompanies;
-using MovieMagnet.MovieCountries;
-using MovieMagnet.MovieGenres;
-using MovieMagnet.MovieKeywords;
-using MovieMagnet.ProductionCompanies;
+﻿using System.ComponentModel.DataAnnotations;
 using Volo.Abp.Domain.Entities;
-using Volo.Abp.Domain.Entities.Auditing;
 
-namespace MovieMagnet.Movies;
+namespace MovieMagnet.Entities;
 
 public class Movie : Entity<long>
 {
-    public decimal Budget { get; set; }
+    public float Budget { get; set; }
+    
+    [Required]
+    [MaxLength(255)]
     public required string Title { get; set; } 
+    
+    [Required]
+    [MaxLength(255)]
     public required string Language { get; set; }
     public string? Overview { get; set; }
     public string? PosterPath { get; set; }
     public DateTime ReleaseDate { get; set; }
+    
+    [Required]
+    [MaxLength(255)]
     public required string ImdbId { get; set; }
-    public decimal Popularity { get; set; }
-    public decimal Revenue { get; set; }
-    public decimal Runtime { get; set; }
-    public decimal VoteAverage { get; set; }
+    public float Popularity { get; set; }
+    public float Revenue { get; set; }
+    public float Runtime { get; set; }
+    public float VoteAverage { get; set; }
     public int VoteCount { get; set; }
     
     public virtual ICollection<MovieKeyword> MovieKeywords { get; set; }

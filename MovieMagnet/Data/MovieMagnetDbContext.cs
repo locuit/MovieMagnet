@@ -1,14 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using MovieMagnet.Genres;
-using MovieMagnet.Keywords;
-using MovieMagnet.Languages;
-using MovieMagnet.MovieCompanies;
-using MovieMagnet.MovieCountries;
-using MovieMagnet.MovieGenres;
-using MovieMagnet.MovieKeywords;
-using MovieMagnet.Movies;
-using MovieMagnet.ProductionCompanies;
-using MovieMagnet.ProductionCountries;
+using MovieMagnet.Entities;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.FeatureManagement.EntityFrameworkCore;

@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using MovieMagnet.MovieGenres;
+﻿using System.ComponentModel.DataAnnotations;
 using Volo.Abp.Domain.Entities;
-using Volo.Abp.Domain.Entities.Auditing;
 
-namespace MovieMagnet.Genres;
+namespace MovieMagnet.Entities;
 
 
 public class Genre : Entity<long>
 {
+    [Required]
+    [MaxLength(255)]
     public string Name { get; set; }
     
     public virtual ICollection<MovieGenre> MovieGenres { get; set; }
