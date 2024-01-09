@@ -1,4 +1,5 @@
-﻿using System.Linq.Dynamic.Core;
+﻿using System.Linq;
+using System.Linq.Dynamic.Core;
 using MovieMagnet.Entities;
 using MovieMagnet.Services.Dtos;
 using MovieMagnet.Services.Dtos.Movies;
@@ -12,7 +13,7 @@ namespace MovieMagnet.Services.Movies;
 public class MovieService : MovieMagnetAppService, IMovieService
 {
     private readonly IRepository<Movie, long> _movieRepository;
-    
+
     public MovieService(IRepository<Movie, long> movieRepository)
     {
         _movieRepository = movieRepository;
@@ -32,13 +33,13 @@ public class MovieService : MovieMagnetAppService, IMovieService
             ObjectMapper.Map<List<Movie>, List<MovieDto>>(movies)
         );
     }
-    
+
     public async Task<MovieDto> GetAsync(long id)
     {
         var movie = await _movieRepository.GetAsync(id);
         return ObjectMapper.Map<Movie, MovieDto>(movie);
     }
-    
+
     public async Task<MovieDto> CreateAsync(MovieDto input)
     {
         var movie = new Movie
@@ -55,7 +56,7 @@ public class MovieService : MovieMagnetAppService, IMovieService
             Runtime = input.Runtime,
             VoteAverage = input.VoteAverage,
             VoteCount = input.VoteCount,
-            };
+        };
         movie = await _movieRepository.InsertAsync(movie, autoSave: true);
         var movieDto = new MovieDto
         {
@@ -73,5 +74,41 @@ public class MovieService : MovieMagnetAppService, IMovieService
             VoteCount = movie.VoteCount,
         };
         return movieDto;
+    }
+
+    public async Task<PagedResultDto<MovieDto>> GetMoviesByGenresAsync(long genresId, PagedAndSortedResultRequestDto input)
+    {
+        List<MovieDto> result = new() { };
+
+        var queryable = (await _movieRepository.WithDetailsAsync()).Where(movie => movie.MovieGenres.Any(movieGenre => movieGenre.GenreId == genresId))
+                                                                   .Skip(input.SkipCount)
+                                                                   .Take(input.MaxResultCount);
+
+        var queryResult = await AsyncExecuter.ToListAsync(queryable);
+
+        queryResult.ForEach(movie =>
+        {
+            result.add(new MovieDto()
+            {
+                Id = movie.Id,
+                Budget = movie.Budget,
+                Title = movie.Title,
+                Language = movie.Language,
+                Overview = movie.Overview,
+                PosterPath = movie.PosterPath,
+                ReleaseDate = movie.ReleaseDate,
+                ImdbId = movie.ImdbId,
+                Popularity = movie.Popularity,
+                Revenue = movie.Revenue,
+                Runtime = movie.Runtime,
+                VoteAverage = movie.VoteAverage,
+                VoteCount = movie.VoteCount,
+            });
+        });
+
+        return new PagedResultDto<MovieDto>(
+            queryable.Count(),
+           result
+        );
     }
 }
