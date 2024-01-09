@@ -26,8 +26,8 @@ namespace MovieMagnet.Services.Users
             _httpContextAccessor = httpContextAccessor;
         }
         
-        [AllowAnonymous]
         [HttpPost("auth/login")]
+        [AllowAnonymous]
         public async Task<LoginUserDto> LoginAsync(LoginUserDto input)
         {
             var user = await _userRepository.FirstOrDefaultAsync(x => x.Username == input.Username);
@@ -49,15 +49,15 @@ namespace MovieMagnet.Services.Users
             };
         }
 
-        [AllowAnonymous]
         [HttpPost("auth/logout")]
+        [AllowAnonymous]
         public async Task LogoutAsync()
         {
             await Task.CompletedTask;
         }
 
+        [HttpPost("auth/register")]
         [AllowAnonymous]
-        [HttpPost("auth/login")]
         public async Task<RegisterUserDto> RegisterAsync(RegisterUserDto input)
         {
             var user = await _userRepository.FirstOrDefaultAsync(x => x.Username == input.Username);
@@ -87,6 +87,17 @@ namespace MovieMagnet.Services.Users
             return userDto;
         }
         
+        [HttpGet("/users/me")]
+        [Authorize]
+        public async Task<UserDto> GetMe()
+        {
+            var user = _httpContextAccessor.HttpContext?.Items["User"] as UserDto;
+            if (user == null)
+            {
+                throw new UserFriendlyException("User not found");
+            }
+            return user;
+        }
         
         public async Task<UserDto> GetById(long id)
         {
@@ -108,16 +119,5 @@ namespace MovieMagnet.Services.Users
         }
         
         
-        [HttpGet("/users/me")]
-        [Authorize]
-        public async Task<UserDto> GetMe()
-        {
-            var user = _httpContextAccessor.HttpContext?.Items["User"] as UserDto;
-            if (user == null)
-            {
-                throw new UserFriendlyException("User not found");
-            }
-            return user;
-        }
     }
 }
