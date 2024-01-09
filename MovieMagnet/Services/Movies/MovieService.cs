@@ -1,4 +1,4 @@
-﻿using System.Linq.Dynamic.Core;
+using System.Linq.Dynamic.Core;
 using MovieMagnet.Entities;
 using MovieMagnet.Services.Dtos.Movies;
 using Volo.Abp.Application.Dtos;
@@ -74,7 +74,6 @@ public class MovieService : MovieMagnetAppService, IMovieService
             VoteAverage = movie.VoteAverage,
             VoteCount = movie.VoteCount,
         };
-
         return movieDto;
     }
 }

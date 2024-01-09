@@ -1,8 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using Volo.Abp.Domain.Entities;
 
 namespace MovieMagnet.Entities;
-
 
 public class Genre : Entity<long>
 {

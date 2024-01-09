@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MovieMagnet.Data;
 using Volo.Abp.EntityFrameworkCore;
@@ -11,9 +12,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace MovieMagnet.Migrations
 {
     [DbContext(typeof(MovieMagnetDbContext))]
-    partial class MovieMagnetDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240106110133_Fix_movie")]
+    partial class Fixmovie
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -80,9 +83,11 @@ namespace MovieMagnet.Migrations
                         .HasColumnType("decimal(65,30)");
 
                     b.Property<string>("ImdbId")
+                        .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("Language")
+                        .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("varchar(32)");
 
@@ -96,7 +101,7 @@ namespace MovieMagnet.Migrations
                     b.Property<string>("PosterPath")
                         .HasColumnType("longtext");
 
-                    b.Property<DateTime?>("ReleaseDate")
+                    b.Property<DateTime>("ReleaseDate")
                         .HasColumnType("datetime(6)");
 
                     b.Property<decimal>("Revenue")

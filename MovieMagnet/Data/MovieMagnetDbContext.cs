@@ -24,6 +24,7 @@ public class MovieMagnetDbContext : AbpDbContext<MovieMagnetDbContext>
     public DbSet<MovieCountry> MovieCountries { get; set; }
     public DbSet<MovieCompany> MovieCompanies { get; set; }
     public DbSet<MovieKeyword> MovieKeywords { get; set; }
+    public DbSet<User> Users { get; set; }
     public MovieMagnetDbContext(DbContextOptions<MovieMagnetDbContext> options)
         : base(options)
     {
@@ -80,12 +81,31 @@ public class MovieMagnetDbContext : AbpDbContext<MovieMagnetDbContext>
         {
             b.ToTable("Movies");
             b.Property(x => x.Title).IsRequired().HasMaxLength(256);
-            b.Property(x => x.Language).IsRequired().HasMaxLength(32);
-            b.Property(x => x.Overview).IsRequired().HasMaxLength(512);
+            b.Property(x => x.Language).HasMaxLength(32);
+            b.Property(x => x.Overview).HasMaxLength(512);
             b.HasIndex(x => x.ImdbId).IsUnique();
             b.HasMany(x => x.MovieGenres).WithOne(x => x.Movie).HasForeignKey(x => x.MovieId);
             b.HasMany(x => x.MovieCountries).WithOne(x => x.Movie).HasForeignKey(x => x.MovieId);
             b.HasMany(x => x.MovieCompanies).WithOne(x => x.Movie).HasForeignKey(x => x.MovieId);
+        });
+        
+        builder.Entity<User>(b =>
+        {
+            b.ToTable("Users");
+            b.Property(x => x.Username).IsRequired().HasMaxLength(32);
+            b.Property(x => x.Password).IsRequired().HasMaxLength(265);
+            b.Property(x => x.Email).IsRequired().HasMaxLength(32);
+            b.Property(x => x.Fullname).IsRequired().HasMaxLength(32);
+            b.Property(x => x.Avatar).HasMaxLength(256);
+        });
+        
+        builder.Entity<Rating>(b =>
+        {
+            b.ToTable("Ratings");
+            b.Property(x => x.Score).IsRequired();
+            b.HasKey(x => new { x.MovieId, x.UserId });
+            b.HasOne(x => x.Movie).WithMany(x => x.Ratings).HasForeignKey(x => x.MovieId);
+            b.HasOne(x => x.User).WithMany(x => x.Ratings).HasForeignKey(x => x.UserId);
         });
     }
 }

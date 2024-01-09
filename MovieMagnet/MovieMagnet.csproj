@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="Microsoft.Data.Analysis" Version="0.21.0" />
     <PackageReference Include="Pandas.NET" Version="0.6.0" />
     <PackageReference Include="SciSharp.TensorFlow.Redist-Windows-GPU" Version="2.10.3" />
@@ -110,6 +111,7 @@
 
   <ItemGroup>
     <Content Remove="$(UserProfile)\.nuget\packages\*\*\contentFiles\any\*\*.abppkg*.json" />
+
   </ItemGroup>
 
   <ItemGroup>

@@ -11,5 +11,6 @@ public class MovieMagnetAutoMapperProfile : Profile
     {
         /* Create your AutoMapper object mappings here */
         CreateMap<Movie, MovieDto>();
+        CreateMap<User, UserDto>();
     }
 }
