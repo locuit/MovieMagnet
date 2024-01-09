@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.OpenApi.Models;
+using MovieMagnet.Authorization;
 using MovieMagnet.Data;
 using MovieMagnet.Localization;
 using MovieMagnet.Menus;
+using MovieMagnet.Services.Dtos.Users;
 using OpenIddict.Validation.AspNetCore;
 using Volo.Abp;
 using Volo.Abp.Uow;
@@ -151,6 +153,7 @@ public class MovieMagnetModule : AbpModule
 
     private void ConfigureAuthentication(ServiceConfigurationContext context)
     {
+        context.Services.AddHttpContextAccessor();
         context.Services.ForwardIdentityAuthenticationForBearer(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
     }
 
@@ -261,6 +264,29 @@ public class MovieMagnetModule : AbpModule
                 options.SwaggerDoc("v1", new OpenApiInfo { Title = "MovieMagnet API", Version = "v1" });
                 options.DocInclusionPredicate((docName, description) => true);
                 options.CustomSchemaIds(type => type.FullName);
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    In = ParameterLocation.Header,
+                    Description = "Please enter a valid token",
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    BearerFormat = "JWT",
+                    Scheme = "Bearer"
+                });
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new List<string>()
+                    }
+                });
             }
         );
     }
@@ -303,7 +329,6 @@ public class MovieMagnetModule : AbpModule
     {
         var app = context.GetApplicationBuilder();
         var env = context.GetEnvironment();
-
         if (env.IsDevelopment())
         {
             app.UseDeveloperExceptionPage();
@@ -329,7 +354,22 @@ public class MovieMagnetModule : AbpModule
 
         app.UseUnitOfWork();
         app.UseAuthorization();
-
+        app.Use(async (context, next) =>
+        {
+            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            if (token != null)
+            {
+                var jwtUtils = context.RequestServices.GetRequiredService<IJwtUtils>();
+                var userId = jwtUtils.ValidateJwtToken(token);
+                if (userId != null)
+                {
+                    var userService = context.RequestServices.GetRequiredService<IUserService>();
+                    context.Items["User"] = await userService.GetById(userId.Value);
+                }
+            }
+            await next();
+        });
+        app.UseMiddleware<JwtMiddleware>();
         app.UseSwagger();
         app.UseAbpSwaggerUI(options =>
         {

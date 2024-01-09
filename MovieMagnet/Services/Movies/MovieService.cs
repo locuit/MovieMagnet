@@ -26,12 +26,7 @@ public class MovieService : MovieMagnetAppService, IMovieService
             .OrderBy(input.Sorting ?? nameof(Movie.Title))
             .Skip(input.SkipCount)
             .Take(input.MaxResultCount);
-
         var movies = await AsyncExecuter.ToListAsync(queryable);
-        /// test tensorflow
-        var hello = tf.constant("Hello, TensorFlow!");
-        /// end test tensorflow
-        Console.WriteLine(hello);
         return new PagedResultDto<MovieDto>(
             queryable.Count(),
             ObjectMapper.Map<List<Movie>, List<MovieDto>>(movies)
