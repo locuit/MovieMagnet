@@ -25,4 +25,7 @@ public class Movie : Entity<long>
     public virtual ICollection<Rating> Ratings { get; set; }
 
     public virtual ICollection<UserWatchList> UserWatchList { get; set; }
+    
+    public virtual ICollection<MovieWatching> MovieWatchings { get; set; }
+
 }

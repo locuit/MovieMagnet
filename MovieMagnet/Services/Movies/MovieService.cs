@@ -1,7 +1,6 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Linq.Dynamic.Core;
 using Microsoft.EntityFrameworkCore;
-using MovieMagnet.Data;
 using MovieMagnet.Entities;
 using MovieMagnet.Services.Dtos;
 using MovieMagnet.Services.Dtos.Movies;
