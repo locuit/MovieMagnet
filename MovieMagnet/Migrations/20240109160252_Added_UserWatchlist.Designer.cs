@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MovieMagnet.Data;
 using Volo.Abp.EntityFrameworkCore;
@@ -11,9 +12,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace MovieMagnet.Migrations
 {
     [DbContext(typeof(MovieMagnetDbContext))]
-    partial class MovieMagnetDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240109160252_Added_UserWatchlist")]
+    partial class AddedUserWatchlist
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -194,31 +197,6 @@ namespace MovieMagnet.Migrations
                     b.HasIndex("KeywordId");
 
                     b.ToTable("MovieKeywords", (string)null);
-                });
-
-            modelBuilder.Entity("MovieMagnet.Entities.MovieWatching", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("MovieId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("lastViewMoment")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MovieId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("MovieWatchings", (string)null);
                 });
 
             modelBuilder.Entity("MovieMagnet.Entities.ProductionCompany", b =>
@@ -2079,25 +2057,6 @@ namespace MovieMagnet.Migrations
                     b.Navigation("Movie");
                 });
 
-            modelBuilder.Entity("MovieMagnet.Entities.MovieWatching", b =>
-                {
-                    b.HasOne("MovieMagnet.Entities.Movie", "Movie")
-                        .WithMany("MovieWatchings")
-                        .HasForeignKey("MovieId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MovieMagnet.Entities.User", "User")
-                        .WithMany("MovieWatchings")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Movie");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("MovieMagnet.Entities.Rating", b =>
                 {
                     b.HasOne("MovieMagnet.Entities.Movie", "Movie")
@@ -2298,8 +2257,6 @@ namespace MovieMagnet.Migrations
 
                     b.Navigation("MovieKeywords");
 
-                    b.Navigation("MovieWatchings");
-
                     b.Navigation("Ratings");
 
                     b.Navigation("UserWatchList");
@@ -2317,8 +2274,6 @@ namespace MovieMagnet.Migrations
 
             modelBuilder.Entity("MovieMagnet.Entities.User", b =>
                 {
-                    b.Navigation("MovieWatchings");
-
                     b.Navigation("Ratings");
 
                     b.Navigation("UserWatchList");

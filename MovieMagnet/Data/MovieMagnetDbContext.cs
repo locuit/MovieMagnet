@@ -25,6 +25,10 @@ public class MovieMagnetDbContext : AbpDbContext<MovieMagnetDbContext>
     public DbSet<MovieCompany> MovieCompanies { get; set; }
     public DbSet<MovieKeyword> MovieKeywords { get; set; }
     public DbSet<User> Users { get; set; }
+
+    public DbSet<UserWatchList> UserWatchLists { get; set; }
+    
+    public DbSet<MovieWatching> MovieWatchings { get; set; }
     public MovieMagnetDbContext(DbContextOptions<MovieMagnetDbContext> options)
         : base(options)
     {
@@ -108,6 +112,17 @@ public class MovieMagnetDbContext : AbpDbContext<MovieMagnetDbContext>
             b.HasOne(x => x.User).WithMany(x => x.Ratings).HasForeignKey(x => x.UserId);
         });
 
+        builder.Entity<UserWatchList>(b =>
+        {
+            b.ToTable("UserWatchList");
+            b.Property(x => x.MovieId).IsRequired();
+            b.Property(x => x.UserId).IsRequired();
+            b.HasKey(x => new { x.MovieId, x.UserId });
+            b.HasOne(x => x.Movie).WithMany(x => x.UserWatchList).HasForeignKey(x => x.MovieId);
+            b.HasOne(x => x.User).WithMany(x => x.UserWatchList).HasForeignKey(x => x.UserId);
+        });
+        
+        
         builder.Entity<MovieWatching>(b =>
         {
             b.ToTable("MovieWatchings");
