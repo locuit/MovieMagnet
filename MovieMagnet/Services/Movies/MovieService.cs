@@ -1,5 +1,7 @@
 ﻿using System.Linq;
 using System.Linq.Dynamic.Core;
+using Microsoft.EntityFrameworkCore;
+using MovieMagnet.Data;
 using MovieMagnet.Entities;
 using MovieMagnet.Services.Dtos;
 using MovieMagnet.Services.Dtos.Movies;
@@ -83,6 +85,98 @@ public class MovieService : MovieMagnetAppService, IMovieService
         var queryable = (await _movieRepository.WithDetailsAsync()).Where(movie => movie.MovieGenres.Any(movieGenre => movieGenre.GenreId == genresId))
                                                                    .Skip(input.SkipCount)
                                                                    .Take(input.MaxResultCount);
+
+        var queryResult = await AsyncExecuter.ToListAsync(queryable);
+
+        queryResult.ForEach(movie =>
+        {
+            result.add(new MovieDto()
+            {
+                Id = movie.Id,
+                Budget = movie.Budget,
+                Title = movie.Title,
+                Language = movie.Language,
+                Overview = movie.Overview,
+                PosterPath = movie.PosterPath,
+                ReleaseDate = movie.ReleaseDate,
+                ImdbId = movie.ImdbId,
+                Popularity = movie.Popularity,
+                Revenue = movie.Revenue,
+                Runtime = movie.Runtime,
+                VoteAverage = movie.VoteAverage,
+                VoteCount = movie.VoteCount,
+            });
+        });
+
+        return new PagedResultDto<MovieDto>(
+            queryable.Count(),
+           result
+        );
+    }
+
+    public async Task<PagedResultDto<MovieDto>> GetTopRated(PagedAndSortedResultRequestDto input)
+    {
+        List<MovieDto> result = new() { };
+
+        decimal meanVote = await CalculateMeanVote();
+        const decimal minVotesRequired = 7;
+
+        var queryable = (await _movieRepository.WithDetailsAsync())
+            .Where(movie => movie.VoteAverage >= minVotesRequired)
+            .OrderByDescending(movie =>
+                ((movie.VoteCount / (movie.VoteCount + meanVote)) * movie.VoteAverage)
+                + ((meanVote / (movie.VoteCount + meanVote)) * meanVote))
+            .Skip(input.SkipCount)
+            .Take(input.MaxResultCount);
+
+        var queryResult = await AsyncExecuter.ToListAsync(queryable);
+
+        queryResult.ForEach(movie =>
+        {
+            result.add(new MovieDto()
+            {
+                Id = movie.Id,
+                Budget = movie.Budget,
+                Title = movie.Title,
+                Language = movie.Language,
+                Overview = movie.Overview,
+                PosterPath = movie.PosterPath,
+                ReleaseDate = movie.ReleaseDate,
+                ImdbId = movie.ImdbId,
+                Popularity = movie.Popularity,
+                Revenue = movie.Revenue,
+                Runtime = movie.Runtime,
+                VoteAverage = movie.VoteAverage,
+                VoteCount = movie.VoteCount,
+            });
+        });
+
+        return new PagedResultDto<MovieDto>(
+            queryable.Count(),
+           result
+        );
+    }
+
+    private async Task<decimal> CalculateMeanVote()
+    {
+        IQueryable queryable = await _movieRepository.WithDetailsAsync();
+
+        decimal totalVotes = await _movieRepository.SumAsync(x => x.VoteAverage);
+        int totalMovies = await _movieRepository.CountAsync();
+
+        return totalVotes / totalMovies;
+    }
+
+    public async Task<PagedResultDto<MovieDto>> GetRandom(PagedAndSortedResultRequestDto input)
+    {
+        List<MovieDto> result = new() { };
+
+        var queryable = await _movieRepository.WithDetailsAsync();
+
+        Random rnd = new Random();
+
+        queryable = queryable.Where(x => true).OrderBy(x => EF.Functions.Random()).Skip(input.SkipCount)
+            .Take(input.MaxResultCount);
 
         var queryResult = await AsyncExecuter.ToListAsync(queryable);
 
