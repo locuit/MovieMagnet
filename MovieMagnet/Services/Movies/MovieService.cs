@@ -1,4 +1,6 @@
 ﻿using System.Linq.Dynamic.Core;
+using Microsoft.AspNetCore.Mvc;
+using MovieMagnet.Authorization;
 using MovieMagnet.Entities;
 using MovieMagnet.Services.Dtos;
 using MovieMagnet.Services.Dtos.Movies;
@@ -9,15 +11,20 @@ using static Tensorflow.Binding;
 
 namespace MovieMagnet.Services.Movies;
 
+[Authorize]
 public class MovieService : MovieMagnetAppService, IMovieService
 {
     private readonly IRepository<Movie, long> _movieRepository;
-    
-    public MovieService(IRepository<Movie, long> movieRepository)
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public MovieService(IRepository<Movie, long> movieRepository,IHttpContextAccessor httpContextAccessor)
     {
         _movieRepository = movieRepository;
+        _httpContextAccessor = httpContextAccessor;
     }
 
+    [HttpGet("movies")]
+    [AllowAnonymous]
     public async Task<PagedResultDto<MovieDto>> GetListAsync(PagedAndSortedResultRequestDto input)
     {
         var queryable = await _movieRepository.WithDetailsAsync();
@@ -33,6 +40,8 @@ public class MovieService : MovieMagnetAppService, IMovieService
         );
     }
     
+    [HttpGet("movies/{id}")]
+    [AllowAnonymous]
     public async Task<MovieDto> GetAsync(long id)
     {
         var movie = await _movieRepository.GetAsync(id);

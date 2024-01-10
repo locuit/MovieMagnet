@@ -107,5 +107,13 @@ public class MovieMagnetDbContext : AbpDbContext<MovieMagnetDbContext>
             b.HasOne(x => x.Movie).WithMany(x => x.Ratings).HasForeignKey(x => x.MovieId);
             b.HasOne(x => x.User).WithMany(x => x.Ratings).HasForeignKey(x => x.UserId);
         });
+
+        builder.Entity<MovieWatching>(b =>
+        {
+            b.ToTable("MovieWatchings");
+            b.Property(x => x.lastViewMoment).IsRequired();
+            b.HasOne(x => x.Movie).WithMany(x => x.MovieWatchings).HasForeignKey(x => x.MovieId);
+            b.HasOne(x => x.User).WithMany(x => x.MovieWatchings).HasForeignKey(x => x.UserId);
+        });
     }
 }
