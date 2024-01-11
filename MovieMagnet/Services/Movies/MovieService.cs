@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Linq.Dynamic.Core;
 using Microsoft.EntityFrameworkCore;
+using MovieMagnet.Data;
 using MovieMagnet.Entities;
 using MovieMagnet.Services.Dtos;
 using MovieMagnet.Services.Dtos.Movies;
@@ -9,31 +10,93 @@ using Volo.Abp.Domain.Repositories;
 using static Tensorflow.Binding;
 
 
+
 namespace MovieMagnet.Services.Movies;
 
 public class MovieService : MovieMagnetAppService, IMovieService
 {
     private readonly IRepository<Movie, long> _movieRepository;
+    private readonly MovieMagnetDbContext _dbContext;
 
-    public MovieService(IRepository<Movie, long> movieRepository)
+
+    public MovieService(IRepository<Movie, long> movieRepository,MovieMagnetDbContext dbContext)
     {
         _movieRepository = movieRepository;
+        _dbContext = dbContext;
     }
 
     public async Task<PagedResultDto<MovieDto>> GetListAsync(PagedAndSortedResultRequestDto input)
     {
-        var queryable = await _movieRepository.WithDetailsAsync();
+  
+        var pageSize = input.MaxResultCount * 2;
+        var offset = input.SkipCount * pageSize + 1;
+        var sqlQuery = $"SELECT m.*, g.Name AS GenreName " +
+                       $"FROM Movies m " +
+                       $"INNER JOIN MovieGenres mg ON m.Id = mg.MovieId " +
+                       $"INNER JOIN Genres g ON mg.GenreId = g.Id " +
+                       $"ORDER BY m.Id " +
+                       $"LIMIT {pageSize} OFFSET {offset}";
+        Console.WriteLine(sqlQuery);
+        var movies = await _dbContext.Movies
+            .FromSqlRaw(sqlQuery)
+            .Select(movie => new
+            {
+                movie.Id,
+                movie.Title,
+                movie.Budget,
+                movie.Language,
+                movie.Overview,
+                movie.PosterPath,
+                movie.ReleaseDate,
+                movie.ImdbId,
+                movie.Popularity,
+                movie.Revenue,
+                movie.Runtime,
+                movie.VoteAverage,
+                movie.VoteCount,
+                MovieGenres = movie.MovieGenres.AsEnumerable().Select(mg => mg.Genre.Name).ToList()
+            })
+            .ToListAsync();
 
-        queryable = queryable
-            .OrderBy(input.Sorting ?? nameof(Movie.Title))
-            .Skip(input.SkipCount)
-            .Take(input.MaxResultCount);
-        var movies = await AsyncExecuter.ToListAsync(queryable);
-        return new PagedResultDto<MovieDto>(
-            queryable.Count(),
-            ObjectMapper.Map<List<Movie>, List<MovieDto>>(movies)
-        );
+        var uniqueMovies = movies
+            .GroupBy(movie => movie.Id)
+            .Select(group => group.First())  // Select the first movie from each group (assuming Id is unique)
+            .ToList();
+
+        var movieDtos = uniqueMovies.Select(entry => new MovieDto
+        {
+            Id = entry.Id,
+            Title = entry.Title,
+            Budget = entry.Budget,
+            Language = entry.Language,
+            Overview = entry.Overview,
+            PosterPath = entry.PosterPath,
+            ReleaseDate = entry.ReleaseDate,
+            ImdbId = entry.ImdbId,
+            Popularity = entry.Popularity,
+            Revenue = entry.Revenue,
+            Runtime = entry.Runtime,
+            VoteAverage = entry.VoteAverage,
+            VoteCount = entry.VoteCount,
+            Genres = entry.MovieGenres.ToArray()
+        }).ToList();
+
+        var result = new PagedResultDto<MovieDto>
+        {
+            TotalCount = movieDtos.Count,
+            Items = movieDtos
+        };
+
+        return result;
     }
+
+
+
+
+
+
+
+
 
     public async Task<MovieDto> GetAsync(long id)
     {
