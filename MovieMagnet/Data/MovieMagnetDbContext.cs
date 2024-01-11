@@ -29,6 +29,8 @@ public class MovieMagnetDbContext : AbpDbContext<MovieMagnetDbContext>
     public DbSet<UserWatchList> UserWatchLists { get; set; }
     
     public DbSet<MovieWatching> MovieWatchings { get; set; }
+    
+    public DbSet<Rating> Ratings { get; set; }
     public MovieMagnetDbContext(DbContextOptions<MovieMagnetDbContext> options)
         : base(options)
     {

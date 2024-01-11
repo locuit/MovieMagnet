@@ -5,6 +5,7 @@ using MovieMagnet.Data;
 using MovieMagnet.Entities;
 using MovieMagnet.Services.Dtos;
 using MovieMagnet.Services.Dtos.Movies;
+using NUglify.Helpers;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Repositories;
 using static Tensorflow.Binding;
@@ -25,45 +26,18 @@ public class MovieService : MovieMagnetAppService, IMovieService
         _dbContext = dbContext;
     }
 
-    public async Task<PagedResultDto<MovieDto>> GetListAsync(PagedAndSortedResultRequestDto input)
+    public async Task<PagedResultDto<MovieDto>> GetListAsync(PagedAndSortedResultRequestDto input, string? search)
     {
-  
-        var pageSize = input.MaxResultCount * 2;
-        var offset = input.SkipCount * pageSize + 1;
-        var sqlQuery = $"SELECT m.*, g.Name AS GenreName " +
-                       $"FROM Movies m " +
-                       $"INNER JOIN MovieGenres mg ON m.Id = mg.MovieId " +
-                       $"INNER JOIN Genres g ON mg.GenreId = g.Id " +
-                       $"ORDER BY m.Id " +
-                       $"LIMIT {pageSize} OFFSET {offset}";
-        Console.WriteLine(sqlQuery);
-        var movies = await _dbContext.Movies
-            .FromSqlRaw(sqlQuery)
-            .Select(movie => new
-            {
-                movie.Id,
-                movie.Title,
-                movie.Budget,
-                movie.Language,
-                movie.Overview,
-                movie.PosterPath,
-                movie.ReleaseDate,
-                movie.ImdbId,
-                movie.Popularity,
-                movie.Revenue,
-                movie.Runtime,
-                movie.VoteAverage,
-                movie.VoteCount,
-                MovieGenres = movie.MovieGenres.AsEnumerable().Select(mg => mg.Genre.Name).ToList()
-            })
-            .ToListAsync();
-
-        var uniqueMovies = movies
-            .GroupBy(movie => movie.Id)
-            .Select(group => group.First())  // Select the first movie from each group (assuming Id is unique)
-            .ToList();
-
-        var movieDtos = uniqueMovies.Select(entry => new MovieDto
+        var movies = _dbContext.Movies
+            .Where(m =>
+                string.IsNullOrEmpty(search) ||
+                m.Title.Contains(search))
+            .OrderBy(input.Sorting ?? nameof(Movie.Title))
+            .Skip(input.SkipCount)
+            .Take(input.MaxResultCount)
+            .Include(m => m.MovieGenres)
+            .ThenInclude(mg => mg.Genre);
+        var movieDtos = movies.Select(entry => new MovieDto
         {
             Id = entry.Id,
             Title = entry.Title,
@@ -78,7 +52,7 @@ public class MovieService : MovieMagnetAppService, IMovieService
             Runtime = entry.Runtime,
             VoteAverage = entry.VoteAverage,
             VoteCount = entry.VoteCount,
-            Genres = entry.MovieGenres.ToArray()
+            Genres = entry.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
         }).ToList();
 
         var result = new PagedResultDto<MovieDto>
@@ -90,19 +64,40 @@ public class MovieService : MovieMagnetAppService, IMovieService
         return result;
     }
 
-
-
-
-
-
-
-
-
+    
     public async Task<MovieDto> GetAsync(long id)
     {
-        var movie = await _movieRepository.GetAsync(id);
-        return ObjectMapper.Map<Movie, MovieDto>(movie);
+        var movie = await _dbContext.Movies
+            .Include(m => m.MovieGenres)
+            .ThenInclude(mg => mg.Genre)
+            .FirstOrDefaultAsync(m => m.Id == id);
+
+        if (movie == null)
+        {
+            return null;
+        }
+
+        var movieDto = new MovieDto
+        {
+            Id = movie.Id,
+            Title = movie.Title,
+            Budget = movie.Budget,
+            Language = movie.Language,
+            Overview = movie.Overview,
+            PosterPath = movie.PosterPath,
+            ReleaseDate = movie.ReleaseDate,
+            ImdbId = movie.ImdbId,
+            Popularity = movie.Popularity,
+            Revenue = movie.Revenue,
+            Runtime = movie.Runtime,
+            VoteAverage = movie.VoteAverage,
+            VoteCount = movie.VoteCount,
+            Genres = movie.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
+        };
+
+        return movieDto;
     }
+
 
     public async Task<MovieDto> CreateAsync(MovieDto input)
     {
@@ -142,81 +137,84 @@ public class MovieService : MovieMagnetAppService, IMovieService
 
     public async Task<PagedResultDto<MovieDto>> GetMoviesByGenresAsync(long genresId, PagedAndSortedResultRequestDto input)
     {
-        List<MovieDto> result = new() { };
+        var movies = _dbContext.Movies
+            .Where(m => m.MovieGenres.Any(mg => mg.GenreId == genresId))
+            .OrderBy(input.Sorting ?? nameof(Movie.Title))
+            .Skip(input.SkipCount)
+            .Take(input.MaxResultCount)
+            .Include(m => m.MovieGenres)
+            .ThenInclude(mg => mg.Genre);
 
-        var queryable = (await _movieRepository.WithDetailsAsync()).Where(movie => movie.MovieGenres.Any(movieGenre => movieGenre.GenreId == genresId))
-                                                                   .Skip(input.SkipCount)
-                                                                   .Take(input.MaxResultCount);
-
-        var queryResult = await AsyncExecuter.ToListAsync(queryable);
-
-        queryResult.ForEach(movie =>
+       var moviesDtos = movies.Select(entry => new MovieDto
         {
-            result.add(new MovieDto()
-            {
-                Id = movie.Id,
-                Budget = movie.Budget,
-                Title = movie.Title,
-                Language = movie.Language,
-                Overview = movie.Overview,
-                PosterPath = movie.PosterPath,
-                ReleaseDate = movie.ReleaseDate,
-                ImdbId = movie.ImdbId,
-                Popularity = movie.Popularity,
-                Revenue = movie.Revenue,
-                Runtime = movie.Runtime,
-                VoteAverage = movie.VoteAverage,
-                VoteCount = movie.VoteCount,
-            });
-        });
+            Id = entry.Id,
+            Title = entry.Title,
+            Budget = entry.Budget,
+            Language = entry.Language,
+            Overview = entry.Overview,
+            PosterPath = entry.PosterPath,
+            ReleaseDate = entry.ReleaseDate,
+            ImdbId = entry.ImdbId,
+            Popularity = entry.Popularity,
+            Revenue = entry.Revenue,
+            Runtime = entry.Runtime,
+            VoteAverage = entry.VoteAverage,
+            VoteCount = entry.VoteCount,
+            Genres = entry.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
+        }).ToList();
 
-        return new PagedResultDto<MovieDto>(
-            queryable.Count(),
-           result
-        );
+       var result = new PagedResultDto<MovieDto>
+       {
+           TotalCount = moviesDtos.Count,
+           Items = moviesDtos
+       };
+
+       return result;
     }
 
     public async Task<PagedResultDto<MovieDto>> GetTopRated(PagedAndSortedResultRequestDto input)
     {
-        List<MovieDto> result = new() { };
 
         decimal meanVote = await CalculateMeanVote();
         const decimal minVotesRequired = 7;
 
-        var queryable = (await _movieRepository.WithDetailsAsync())
+        var movies = _dbContext.Movies
             .Where(movie => movie.VoteAverage >= minVotesRequired)
             .OrderByDescending(movie =>
                 ((movie.VoteCount / (movie.VoteCount + meanVote)) * movie.VoteAverage)
                 + ((meanVote / (movie.VoteCount + meanVote)) * meanVote))
             .Skip(input.SkipCount)
-            .Take(input.MaxResultCount);
+            .Take(input.MaxResultCount)
+            .Include(m => m.MovieGenres)
+            .ThenInclude(mg => mg.Genre);
+        
 
-        var queryResult = await AsyncExecuter.ToListAsync(queryable);
-
-        queryResult.ForEach(movie =>
+        var movieDtos = movies.Select(entry => new MovieDto()
         {
-            result.add(new MovieDto()
-            {
-                Id = movie.Id,
-                Budget = movie.Budget,
-                Title = movie.Title,
-                Language = movie.Language,
-                Overview = movie.Overview,
-                PosterPath = movie.PosterPath,
-                ReleaseDate = movie.ReleaseDate,
-                ImdbId = movie.ImdbId,
-                Popularity = movie.Popularity,
-                Revenue = movie.Revenue,
-                Runtime = movie.Runtime,
-                VoteAverage = movie.VoteAverage,
-                VoteCount = movie.VoteCount,
-            });
-        });
-
-        return new PagedResultDto<MovieDto>(
-            queryable.Count(),
-           result
-        );
+            Id = entry.Id,
+            Title = entry.Title,
+            Budget = entry.Budget,
+            Language = entry.Language,
+            Overview = entry.Overview,
+            PosterPath = entry.PosterPath,
+            ReleaseDate = entry.ReleaseDate,
+            ImdbId = entry.ImdbId,
+            Popularity = entry.Popularity,
+            Revenue = entry.Revenue,
+            Runtime = entry.Runtime,
+            VoteAverage = entry.VoteAverage,
+            VoteCount = entry.VoteCount,
+            Genres = entry.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
+        }).ToList();
+        
+        var result = new PagedResultDto<MovieDto>
+        {
+            TotalCount = movieDtos.Count,
+            Items = movieDtos
+        };
+        
+        return result;
+            
     }
 
     private async Task<decimal> CalculateMeanVote()
@@ -231,40 +229,42 @@ public class MovieService : MovieMagnetAppService, IMovieService
 
     public async Task<PagedResultDto<MovieDto>> GetRandom(PagedAndSortedResultRequestDto input)
     {
-        List<MovieDto> result = new() { };
-
-        var queryable = await _movieRepository.WithDetailsAsync();
-
         Random rnd = new Random();
-
-        queryable = queryable.Where(x => true).OrderBy(x => EF.Functions.Random()).Skip(input.SkipCount)
-            .Take(input.MaxResultCount);
-
-        var queryResult = await AsyncExecuter.ToListAsync(queryable);
-
-        queryResult.ForEach(movie =>
+    
+        var movies = _dbContext.Movies
+            .Where(x => true)
+            .OrderBy(x => EF.Functions.Random())
+            .ThenBy(input.Sorting ?? nameof(Movie.Title))
+            .Skip(input.SkipCount)
+            .Take(input.MaxResultCount)
+            .Include(m => m.MovieGenres)
+            .ThenInclude(mg => mg.Genre);
+       
+        var movieDtos = movies.Select(entry => new MovieDto()
         {
-            result.add(new MovieDto()
-            {
-                Id = movie.Id,
-                Budget = movie.Budget,
-                Title = movie.Title,
-                Language = movie.Language,
-                Overview = movie.Overview,
-                PosterPath = movie.PosterPath,
-                ReleaseDate = movie.ReleaseDate,
-                ImdbId = movie.ImdbId,
-                Popularity = movie.Popularity,
-                Revenue = movie.Revenue,
-                Runtime = movie.Runtime,
-                VoteAverage = movie.VoteAverage,
-                VoteCount = movie.VoteCount,
-            });
-        });
-
-        return new PagedResultDto<MovieDto>(
-            queryable.Count(),
-           result
-        );
+            Id = entry.Id,
+            Title = entry.Title,
+            Budget = entry.Budget,
+            Language = entry.Language,
+            Overview = entry.Overview,
+            PosterPath = entry.PosterPath,
+            ReleaseDate = entry.ReleaseDate,
+            ImdbId = entry.ImdbId,
+            Popularity = entry.Popularity,
+            Revenue = entry.Revenue,
+            Runtime = entry.Runtime,
+            VoteAverage = entry.VoteAverage,
+            VoteCount = entry.VoteCount,
+            Genres = entry.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
+        }).ToList();
+        
+        var result = new PagedResultDto<MovieDto>
+        {
+            TotalCount = movieDtos.Count,
+            Items = movieDtos
+        };
+        
+        return result;
     }
+
 }
