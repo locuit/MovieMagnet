@@ -11,4 +11,8 @@ public class User : Entity<long>
     public string Avatar { get; set; }
     
     public virtual ICollection<Rating> Ratings { get; set; }
+
+    public virtual ICollection<UserWatchList> UserWatchList { get; set; }
+    
+    public virtual ICollection<MovieWatching> MovieWatchings { get; set; }
 }

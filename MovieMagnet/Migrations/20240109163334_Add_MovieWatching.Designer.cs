@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MovieMagnet.Data;
 using Volo.Abp.EntityFrameworkCore;
@@ -11,9 +12,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace MovieMagnet.Migrations
 {
     [DbContext(typeof(MovieMagnetDbContext))]
-    partial class MovieMagnetDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240109163334_Add_MovieWatching")]
+    partial class AddMovieWatching
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -310,24 +313,6 @@ namespace MovieMagnet.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users", (string)null);
-                });
-
-            modelBuilder.Entity("MovieMagnet.Entities.UserWatchList", b =>
-                {
-                    b.Property<long>("MovieId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("MovieId", "UserId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserWatchList", (string)null);
                 });
 
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLog", b =>
@@ -2117,25 +2102,6 @@ namespace MovieMagnet.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("MovieMagnet.Entities.UserWatchList", b =>
-                {
-                    b.HasOne("MovieMagnet.Entities.Movie", "Movie")
-                        .WithMany("UserWatchList")
-                        .HasForeignKey("MovieId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MovieMagnet.Entities.User", "User")
-                        .WithMany("UserWatchList")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Movie");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLogAction", b =>
                 {
                     b.HasOne("Volo.Abp.AuditLogging.AuditLog", null)
@@ -2301,8 +2267,6 @@ namespace MovieMagnet.Migrations
                     b.Navigation("MovieWatchings");
 
                     b.Navigation("Ratings");
-
-                    b.Navigation("UserWatchList");
                 });
 
             modelBuilder.Entity("MovieMagnet.Entities.ProductionCompany", b =>
@@ -2320,8 +2284,6 @@ namespace MovieMagnet.Migrations
                     b.Navigation("MovieWatchings");
 
                     b.Navigation("Ratings");
-
-                    b.Navigation("UserWatchList");
                 });
 
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLog", b =>

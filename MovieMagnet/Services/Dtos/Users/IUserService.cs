@@ -7,4 +7,5 @@ public interface IUserService : IApplicationService
     Task<LoginUserDto> LoginAsync(LoginUserDto input);
     Task LogoutAsync();
     Task<RegisterUserDto> RegisterAsync(RegisterUserDto input);
+    Task<UserDto> GetById(long id);
 }
