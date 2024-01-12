@@ -138,6 +138,16 @@ public class MovieMagnetModule : AbpModule
             context.Services.Replace(ServiceDescriptor.Singleton<IEmailSender, NullEmailSender>());
         }
 
+        context.Services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(builder =>
+            {
+                builder.AllowAnyOrigin()
+                       .AllowAnyMethod()
+                       .AllowAnyHeader();
+            });
+        });
+
         ConfigureAuthentication(context);
         ConfigureMultiTenancy();
         ConfigureUrls(configuration);

@@ -11,4 +11,5 @@ public interface IMovieService : IApplicationService
     Task<PagedResultDto<MovieDto>> GetMoviesByGenresAsync(long genresId, PagedAndSortedResultRequestDto input);
     Task<PagedResultDto<MovieDto>> GetTopRated(PagedAndSortedResultRequestDto input);
     Task<PagedResultDto<MovieDto>> GetRandom(PagedAndSortedResultRequestDto input);
+    Task<bool> PostValidateVidSrcUrl(VidsrcRequestDto input);
 }
