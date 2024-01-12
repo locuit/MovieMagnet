@@ -90,7 +90,7 @@ public class WatchlistService : MovieMagnetAppService, IWatchlistService
                 Popularity = x.Movie.Popularity,
                 Revenue = x.Movie.Revenue,
                 Runtime = x.Movie.Runtime,
-                VoteAverage = x.Movie.VoteAverage,
+                VoteAverage = x.Movie.Ratings.Average(x => x.Score),
                 VoteCount = x.Movie.VoteCount,
                 Genres = x.Movie.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
             });

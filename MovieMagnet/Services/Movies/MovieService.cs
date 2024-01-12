@@ -36,34 +36,33 @@ public class MovieService : MovieMagnetAppService, IMovieService
                 m.Title.Contains(search))
             .OrderBy(input.Sorting ?? nameof(Movie.Title));
 
-        var paginateMovie = movies.Skip(input.SkipCount)
+        var paginateMovie = await movies.Skip(input.SkipCount)
             .Take(input.MaxResultCount)
             .AsSplitQuery()
             .Include(m => m.MovieGenres)
-            .ThenInclude(mg => mg.Genre);
-
-        var movieDtos = paginateMovie.Select(entry => new MovieDto
-        {
-            Id = entry.Id,
-            Title = entry.Title,
-            Budget = entry.Budget,
-            Language = entry.Language,
-            Overview = entry.Overview,
-            PosterPath = entry.PosterPath,
-            ReleaseDate = entry.ReleaseDate,
-            ImdbId = entry.ImdbId,
-            Popularity = entry.Popularity,
-            Revenue = entry.Revenue,
-            Runtime = entry.Runtime,
-            VoteAverage = entry.VoteAverage,
-            VoteCount = entry.VoteCount,
-            Genres = entry.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
-        }).ToList();
+            .ThenInclude(mg => mg.Genre).Include(m => m.Ratings)
+            .Select(entry => new MovieDto
+            {
+                Id = entry.Id,
+                Title = entry.Title,
+                Budget = entry.Budget,
+                Language = entry.Language,
+                Overview = entry.Overview,
+                PosterPath = entry.PosterPath,
+                ReleaseDate = entry.ReleaseDate,
+                ImdbId = entry.ImdbId,
+                Popularity = entry.Popularity,
+                Revenue = entry.Revenue,
+                Runtime = entry.Runtime,
+                VoteAverage = entry.Ratings.Average(mr => mr.Score),
+                VoteCount = entry.VoteCount,
+                Genres = entry.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
+            }).ToListAsync();
 
         var result = new PagedResultDto<MovieDto>
         {
             TotalCount = await movies.CountAsync(),
-            Items = movieDtos
+            Items = paginateMovie
         };
 
         return result;
@@ -75,6 +74,8 @@ public class MovieService : MovieMagnetAppService, IMovieService
         var movie = await _dbContext.Movies
             .Include(m => m.MovieGenres)
             .ThenInclude(mg => mg.Genre)
+            .Include(m => m.Ratings)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(m => m.Id == id);
 
         if (movie == null)
@@ -95,7 +96,7 @@ public class MovieService : MovieMagnetAppService, IMovieService
             Popularity = movie.Popularity,
             Revenue = movie.Revenue,
             Runtime = movie.Runtime,
-            VoteAverage = movie.VoteAverage,
+            VoteAverage = movie.Ratings.Average(mr => mr.Score),
             VoteCount = movie.VoteCount,
             Genres = movie.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
         };
@@ -146,34 +147,32 @@ public class MovieService : MovieMagnetAppService, IMovieService
             .Where(m => m.MovieGenres.Any(mg => mg.GenreId == genresId))
             .OrderBy(input.Sorting ?? nameof(Movie.Title));
 
-        var paginateMovies = movies
+        var paginateMovies = await movies
             .Skip(input.SkipCount)
             .Take(input.MaxResultCount)
             .Include(m => m.MovieGenres)
-            .ThenInclude(mg => mg.Genre);
-
-        var moviesDtos = paginateMovies.Select(entry => new MovieDto
-        {
-            Id = entry.Id,
-            Title = entry.Title,
-            Budget = entry.Budget,
-            Language = entry.Language,
-            Overview = entry.Overview,
-            PosterPath = entry.PosterPath,
-            ReleaseDate = entry.ReleaseDate,
-            ImdbId = entry.ImdbId,
-            Popularity = entry.Popularity,
-            Revenue = entry.Revenue,
-            Runtime = entry.Runtime,
-            VoteAverage = entry.VoteAverage,
-            VoteCount = entry.VoteCount,
-            Genres = entry.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
-        }).ToList();
+            .ThenInclude(mg => mg.Genre).Select(entry => new MovieDto
+            {
+                Id = entry.Id,
+                Title = entry.Title,
+                Budget = entry.Budget,
+                Language = entry.Language,
+                Overview = entry.Overview,
+                PosterPath = entry.PosterPath,
+                ReleaseDate = entry.ReleaseDate,
+                ImdbId = entry.ImdbId,
+                Popularity = entry.Popularity,
+                Revenue = entry.Revenue,
+                Runtime = entry.Runtime,
+                VoteAverage = entry.Ratings.Average(mr => mr.Score),
+                VoteCount = entry.VoteCount,
+                Genres = entry.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
+            }).ToListAsync();
 
         var result = new PagedResultDto<MovieDto>
         {
             TotalCount = await movies.CountAsync(),
-            Items = moviesDtos
+            Items = paginateMovies
         };
 
         return result;
@@ -191,14 +190,12 @@ public class MovieService : MovieMagnetAppService, IMovieService
                 ((movie.VoteCount / (movie.VoteCount + meanVote)) * movie.VoteAverage)
                 + ((meanVote / (movie.VoteCount + meanVote)) * meanVote));
 
-        var paginateMovies = movies
+        var paginateMovies = await movies
         .Skip(input.SkipCount)
         .Take(input.MaxResultCount)
         .Include(m => m.MovieGenres)
-        .ThenInclude(mg => mg.Genre);
-
-
-        var movieDtos = paginateMovies.Select(entry => new MovieDto()
+        .ThenInclude(mg => mg.Genre)
+        .Select(entry => new MovieDto()
         {
             Id = entry.Id,
             Title = entry.Title,
@@ -211,15 +208,16 @@ public class MovieService : MovieMagnetAppService, IMovieService
             Popularity = entry.Popularity,
             Revenue = entry.Revenue,
             Runtime = entry.Runtime,
-            VoteAverage = entry.VoteAverage,
+            VoteAverage = entry.Ratings.Average(mr => mr.Score),
             VoteCount = entry.VoteCount,
             Genres = entry.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
-        }).ToList();
+        }).ToListAsync();
+
 
         var result = new PagedResultDto<MovieDto>
         {
             TotalCount = await movies.CountAsync(),
-            Items = movieDtos
+            Items = paginateMovies
         };
 
         return result;
@@ -244,13 +242,12 @@ public class MovieService : MovieMagnetAppService, IMovieService
             .OrderBy(x => EF.Functions.Random())
             .ThenBy(input.Sorting ?? nameof(Movie.Title));
 
-        var paginateMovies = movies
+        var paginateMovies = await movies
         .Skip(input.SkipCount)
         .Take(input.MaxResultCount)
         .Include(m => m.MovieGenres)
-        .ThenInclude(mg => mg.Genre);
-
-        var movieDtos = paginateMovies.Select(entry => new MovieDto()
+        .ThenInclude(mg => mg.Genre)
+        .Select(entry => new MovieDto()
         {
             Id = entry.Id,
             Title = entry.Title,
@@ -266,12 +263,12 @@ public class MovieService : MovieMagnetAppService, IMovieService
             VoteAverage = entry.VoteAverage,
             VoteCount = entry.VoteCount,
             Genres = entry.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
-        }).ToList();
+        }).ToListAsync();
 
         var result = new PagedResultDto<MovieDto>
         {
             TotalCount = await movies.CountAsync(),
-            Items = movieDtos
+            Items = paginateMovies
         };
 
         return result;

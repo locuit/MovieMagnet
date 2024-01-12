@@ -7,4 +7,6 @@ public interface IRatingService : IApplicationService
     Task<string> CreateAsync(CreateRatingDto input);
     
     Task<string> UpdateAsync(UpdateRatingDto input);
+
+    Task<RatingDto> GetAsync();
 }
