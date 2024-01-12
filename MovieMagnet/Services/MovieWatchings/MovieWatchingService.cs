@@ -64,7 +64,9 @@ public class MovieWatchingService : MovieMagnetAppService, IMovieWatchingService
             .OrderBy(input.Sorting ?? nameof(MovieWatching.MovieId))
             .Skip(input.SkipCount)
             .Take(input.MaxResultCount)
-            .Include(x => x.Movie);
+            .Include(x => x.Movie)
+            .ThenInclude(x => x.MovieGenres)
+            .ThenInclude(x => x.Genre);
         var movies = await AsyncExecuter.ToListAsync(queryable);
         List<MovieDto> result = new() { };
         movies.ForEach(x =>
@@ -84,6 +86,7 @@ public class MovieWatchingService : MovieMagnetAppService, IMovieWatchingService
                 Runtime = x.Movie.Runtime,
                 VoteAverage = x.Movie.VoteAverage,
                 VoteCount = x.Movie.VoteCount,
+                Genres = x.Movie.MovieGenres.Select(mg => mg.Genre.Name).ToArray(),
             });
         });
         return new PagedResultDto<MovieDto>(

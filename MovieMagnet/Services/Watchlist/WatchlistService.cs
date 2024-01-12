@@ -60,7 +60,9 @@ public class WatchlistService : MovieMagnetAppService, IWatchlistService
         UserDto? user = _httpContextAccessor.HttpContext?.Items["User"] as UserDto ?? throw new UserFriendlyException("User not found");
         var queryable = await _userWatchListRepository.WithDetailsAsync();
 
-        queryable = queryable.Where(x => x.UserId == user.Id).Skip(input.SkipCount).Take(input.MaxResultCount).Include(x => x.Movie);
+        queryable = queryable.Where(x => x.UserId == user.Id).Skip(input.SkipCount).Take(input.MaxResultCount).Include(x => x.Movie)
+            .ThenInclude(x => x.MovieGenres)
+            .ThenInclude(x => x.Genre);
 
         var queryResult = await AsyncExecuter.ToListAsync(queryable);
 
@@ -82,6 +84,7 @@ public class WatchlistService : MovieMagnetAppService, IWatchlistService
                 Runtime = x.Movie.Runtime,
                 VoteAverage = x.Movie.VoteAverage,
                 VoteCount = x.Movie.VoteCount,
+                Genres = x.Movie.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
             });
         });
 
