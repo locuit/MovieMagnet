@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using MovieMagnet.Authorization;
 using MovieMagnet.Entities;
 using MovieMagnet.Services.Dtos;
+using MovieMagnet.Services.Dtos.Movies;
 using MovieMagnet.Services.Dtos.MovieWatchings;
 using OneOf.Types;
 using Volo.Abp;

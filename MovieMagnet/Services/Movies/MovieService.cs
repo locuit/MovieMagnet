@@ -1,15 +1,12 @@
-using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Net;
 using Microsoft.EntityFrameworkCore;
 using MovieMagnet.Data;
 using MovieMagnet.Entities;
 using MovieMagnet.Services.Dtos.Movies;
-using NUglify.Helpers;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
-using static Tensorflow.Binding;
 
 
 

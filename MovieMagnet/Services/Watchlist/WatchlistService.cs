@@ -5,6 +5,7 @@ using MovieMagnet.Entities;
 using MovieMagnet.Services.Dtos;
 using MovieMagnet.Services.Dtos.Watchlist;
 using System.Linq;
+using MovieMagnet.Services.Dtos.Movies;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Entities;
