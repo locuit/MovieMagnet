@@ -9,5 +9,5 @@ public class Genre : Entity<long>
     [MaxLength(255)]
     public string Name { get; set; }
     
-    public virtual ICollection<MovieGenre> MovieGenres { get; set; }
+    public virtual ICollection<MovieGenre> MovieGenres { get; set; } = new List<MovieGenre>();
 }

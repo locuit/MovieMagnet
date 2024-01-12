@@ -41,6 +41,7 @@ public class Program
             }
             await builder.AddApplicationAsync<MovieMagnetModule>();
             var app = builder.Build();
+            app.UseCors();
             await app.InitializeApplicationAsync();
 
             if (IsMigrateDatabase(args))
