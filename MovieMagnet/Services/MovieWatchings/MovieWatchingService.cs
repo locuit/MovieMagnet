@@ -11,16 +11,17 @@ using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Validation;
 
 namespace MovieMagnet.Services.MovieWatchings;
 
 [Authorize]
 public class MovieWatchingService : MovieMagnetAppService, IMovieWatchingService
 {
-    private readonly  IRepository<MovieWatching, long> _movieWatchingRepository;
+    private readonly IRepository<MovieWatching, long> _movieWatchingRepository;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public MovieWatchingService(IRepository<MovieWatching, long> movieWatchingRepository,IHttpContextAccessor httpContextAccessor)
+    public MovieWatchingService(IRepository<MovieWatching, long> movieWatchingRepository, IHttpContextAccessor httpContextAccessor)
     {
         _movieWatchingRepository = movieWatchingRepository;
         _httpContextAccessor = httpContextAccessor;
@@ -28,17 +29,33 @@ public class MovieWatchingService : MovieMagnetAppService, IMovieWatchingService
 
     [HttpPost("movies-watching")]
     [Authorize]
-    public async Task<string> AddToWatchingList(long id,string lastViewMoment)
+    public async Task<string> AddToWatchingList(long id, string lastViewMoment)
     {
         var user = _httpContextAccessor.HttpContext?.Items["User"] as UserDto;
+
+        var movie = await _movieWatchingRepository.FirstOrDefaultAsync(x => x.MovieId == id);
+
+        if (movie != null)
+        {
+            await _movieWatchingRepository.UpdateAsync(new MovieWatching()
+            {
+                MovieId = id,
+                UserId = user.Id,
+                lastViewMoment = lastViewMoment
+            });
+            return "Update successfully";
+        }
+
         await _movieWatchingRepository.InsertAsync(new MovieWatching()
         {
-            MovieId = id, UserId = user.Id, lastViewMoment = lastViewMoment
+            MovieId = id,
+            UserId = user.Id,
+            lastViewMoment = lastViewMoment
         });
 
         return "Add successfully";
     }
-    
+
     [HttpDelete("movies-watching")]
     [Authorize]
     public async Task<string> RemoveFromWatchingList(long id)
@@ -47,12 +64,12 @@ public class MovieWatchingService : MovieMagnetAppService, IMovieWatchingService
         var movie = await _movieWatchingRepository.FirstOrDefaultAsync(x => x.MovieId == id && x.UserId == user.Id);
         if (movie == null)
         {
-            throw new EntityNotFoundException("You not add this movie to your watchlist yet.");
+            throw new EntityNotFoundException("You not add this movie to your watching list yet.");
         }
         await _movieWatchingRepository.DeleteAsync(e => e.MovieId == id && e.UserId == user.Id);
         return "Remove successfully";
     }
-    
+
     [HttpGet("movies-watching")]
     [Authorize]
     public async Task<PagedResultDto<MovieDto>> GetAsync(PagedAndSortedResultRequestDto input)
@@ -62,12 +79,11 @@ public class MovieWatchingService : MovieMagnetAppService, IMovieWatchingService
         queryable = queryable.Where(x => x.UserId == user.Id);
         queryable = queryable
             .OrderBy(input.Sorting ?? nameof(MovieWatching.MovieId))
-            .Skip(input.SkipCount)
-            .Take(input.MaxResultCount)
             .Include(x => x.Movie)
             .ThenInclude(x => x.MovieGenres)
             .ThenInclude(x => x.Genre);
-        var movies = await AsyncExecuter.ToListAsync(queryable);
+        var movies = await AsyncExecuter.ToListAsync(queryable.Skip(input.SkipCount)
+            .Take(input.MaxResultCount));
         List<MovieDto> result = new() { };
         movies.ForEach(x =>
         {

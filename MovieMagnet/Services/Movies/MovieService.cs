@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Linq.Dynamic.Core;
+using System.Net;
 using Microsoft.EntityFrameworkCore;
 using MovieMagnet.Data;
 using MovieMagnet.Entities;
@@ -7,6 +8,7 @@ using MovieMagnet.Services.Dtos;
 using MovieMagnet.Services.Dtos.Movies;
 using NUglify.Helpers;
 using Volo.Abp.Application.Dtos;
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using static Tensorflow.Binding;
 
@@ -20,7 +22,7 @@ public class MovieService : MovieMagnetAppService, IMovieService
     private readonly MovieMagnetDbContext _dbContext;
 
 
-    public MovieService(IRepository<Movie, long> movieRepository,MovieMagnetDbContext dbContext)
+    public MovieService(IRepository<Movie, long> movieRepository, MovieMagnetDbContext dbContext)
     {
         _movieRepository = movieRepository;
         _dbContext = dbContext;
@@ -32,12 +34,15 @@ public class MovieService : MovieMagnetAppService, IMovieService
             .Where(m =>
                 string.IsNullOrEmpty(search) ||
                 m.Title.Contains(search))
-            .OrderBy(input.Sorting ?? nameof(Movie.Title))
-            .Skip(input.SkipCount)
+            .OrderBy(input.Sorting ?? nameof(Movie.Title));
+
+        var paginateMovie = movies.Skip(input.SkipCount)
             .Take(input.MaxResultCount)
+            .AsSplitQuery()
             .Include(m => m.MovieGenres)
             .ThenInclude(mg => mg.Genre);
-        var movieDtos = movies.Select(entry => new MovieDto
+
+        var movieDtos = paginateMovie.Select(entry => new MovieDto
         {
             Id = entry.Id,
             Title = entry.Title,
@@ -57,14 +62,14 @@ public class MovieService : MovieMagnetAppService, IMovieService
 
         var result = new PagedResultDto<MovieDto>
         {
-            TotalCount = movieDtos.Count,
+            TotalCount = await movies.CountAsync(),
             Items = movieDtos
         };
 
         return result;
     }
 
-    
+
     public async Task<MovieDto> GetAsync(long id)
     {
         var movie = await _dbContext.Movies
@@ -74,7 +79,7 @@ public class MovieService : MovieMagnetAppService, IMovieService
 
         if (movie == null)
         {
-            return null;
+            throw new EntityNotFoundException("Movie not found");
         }
 
         var movieDto = new MovieDto
@@ -139,13 +144,15 @@ public class MovieService : MovieMagnetAppService, IMovieService
     {
         var movies = _dbContext.Movies
             .Where(m => m.MovieGenres.Any(mg => mg.GenreId == genresId))
-            .OrderBy(input.Sorting ?? nameof(Movie.Title))
+            .OrderBy(input.Sorting ?? nameof(Movie.Title));
+
+        var paginateMovies = movies
             .Skip(input.SkipCount)
             .Take(input.MaxResultCount)
             .Include(m => m.MovieGenres)
             .ThenInclude(mg => mg.Genre);
 
-       var moviesDtos = movies.Select(entry => new MovieDto
+        var moviesDtos = paginateMovies.Select(entry => new MovieDto
         {
             Id = entry.Id,
             Title = entry.Title,
@@ -163,13 +170,13 @@ public class MovieService : MovieMagnetAppService, IMovieService
             Genres = entry.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
         }).ToList();
 
-       var result = new PagedResultDto<MovieDto>
-       {
-           TotalCount = moviesDtos.Count,
-           Items = moviesDtos
-       };
+        var result = new PagedResultDto<MovieDto>
+        {
+            TotalCount = await movies.CountAsync(),
+            Items = moviesDtos
+        };
 
-       return result;
+        return result;
     }
 
     public async Task<PagedResultDto<MovieDto>> GetTopRated(PagedAndSortedResultRequestDto input)
@@ -182,14 +189,16 @@ public class MovieService : MovieMagnetAppService, IMovieService
             .Where(movie => movie.VoteAverage >= minVotesRequired)
             .OrderByDescending(movie =>
                 ((movie.VoteCount / (movie.VoteCount + meanVote)) * movie.VoteAverage)
-                + ((meanVote / (movie.VoteCount + meanVote)) * meanVote))
-            .Skip(input.SkipCount)
-            .Take(input.MaxResultCount)
-            .Include(m => m.MovieGenres)
-            .ThenInclude(mg => mg.Genre);
-        
+                + ((meanVote / (movie.VoteCount + meanVote)) * meanVote));
 
-        var movieDtos = movies.Select(entry => new MovieDto()
+        var paginateMovies = movies
+        .Skip(input.SkipCount)
+        .Take(input.MaxResultCount)
+        .Include(m => m.MovieGenres)
+        .ThenInclude(mg => mg.Genre);
+
+
+        var movieDtos = paginateMovies.Select(entry => new MovieDto()
         {
             Id = entry.Id,
             Title = entry.Title,
@@ -206,15 +215,15 @@ public class MovieService : MovieMagnetAppService, IMovieService
             VoteCount = entry.VoteCount,
             Genres = entry.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
         }).ToList();
-        
+
         var result = new PagedResultDto<MovieDto>
         {
-            TotalCount = movieDtos.Count,
+            TotalCount = await movies.CountAsync(),
             Items = movieDtos
         };
-        
+
         return result;
-            
+
     }
 
     private async Task<decimal> CalculateMeanVote()
@@ -230,17 +239,18 @@ public class MovieService : MovieMagnetAppService, IMovieService
     public async Task<PagedResultDto<MovieDto>> GetRandom(PagedAndSortedResultRequestDto input)
     {
         Random rnd = new Random();
-    
+
         var movies = _dbContext.Movies
-            .Where(x => true)
             .OrderBy(x => EF.Functions.Random())
-            .ThenBy(input.Sorting ?? nameof(Movie.Title))
-            .Skip(input.SkipCount)
-            .Take(input.MaxResultCount)
-            .Include(m => m.MovieGenres)
-            .ThenInclude(mg => mg.Genre);
-       
-        var movieDtos = movies.Select(entry => new MovieDto()
+            .ThenBy(input.Sorting ?? nameof(Movie.Title));
+
+        var paginateMovies = movies
+        .Skip(input.SkipCount)
+        .Take(input.MaxResultCount)
+        .Include(m => m.MovieGenres)
+        .ThenInclude(mg => mg.Genre);
+
+        var movieDtos = paginateMovies.Select(entry => new MovieDto()
         {
             Id = entry.Id,
             Title = entry.Title,
@@ -257,14 +267,27 @@ public class MovieService : MovieMagnetAppService, IMovieService
             VoteCount = entry.VoteCount,
             Genres = entry.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
         }).ToList();
-        
+
         var result = new PagedResultDto<MovieDto>
         {
-            TotalCount = movieDtos.Count,
+            TotalCount = await movies.CountAsync(),
             Items = movieDtos
         };
-        
+
         return result;
     }
 
+    public async Task<bool> PostValidateVidSrcUrl(VidsrcRequestDto input)
+    {
+        var httpClient = new HttpClient();
+
+        var res = await httpClient.GetAsync(input.VidSrcUrl);
+
+        if (res.StatusCode == HttpStatusCode.OK)
+        {
+            return true;
+        }
+
+        return false;
+    }
 }

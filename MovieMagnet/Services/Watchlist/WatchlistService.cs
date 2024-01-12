@@ -9,6 +9,7 @@ using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Validation;
 
 namespace MovieMagnet.Services.Watchlist;
 
@@ -35,6 +36,13 @@ public class WatchlistService : MovieMagnetAppService, IWatchlistService
 
         if(movie == null) { throw new EntityNotFoundException("Movie not found"); }
 
+
+        var watchlistMovie = await _userWatchListRepository.FirstOrDefaultAsync(_ => _.MovieId == movieId);
+
+        if(watchlistMovie != null) {
+            throw new AbpValidationException("You already add this to watchlist");
+        }
+
         await _userWatchListRepository.InsertAsync(new UserWatchList() { MovieId = movieId, UserId = user.Id });
         return "Add successfully";
     }
@@ -60,11 +68,11 @@ public class WatchlistService : MovieMagnetAppService, IWatchlistService
         UserDto? user = _httpContextAccessor.HttpContext?.Items["User"] as UserDto ?? throw new UserFriendlyException("User not found");
         var queryable = await _userWatchListRepository.WithDetailsAsync();
 
-        queryable = queryable.Where(x => x.UserId == user.Id).Skip(input.SkipCount).Take(input.MaxResultCount).Include(x => x.Movie)
+        queryable = queryable.Where(x => x.UserId == user.Id).Include(x => x.Movie)
             .ThenInclude(x => x.MovieGenres)
             .ThenInclude(x => x.Genre);
 
-        var queryResult = await AsyncExecuter.ToListAsync(queryable);
+        var queryResult = await AsyncExecuter.ToListAsync(queryable.Skip(input.SkipCount).Take(input.MaxResultCount));
 
         queryResult.ForEach(x =>
         {
