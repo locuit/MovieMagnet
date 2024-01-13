@@ -8,5 +8,5 @@ public interface IRatingService : IApplicationService
     
     Task<string> UpdateAsync(UpdateRatingDto input);
 
-    Task<RatingDto> GetAsync();
+    Task<RatingDto> GetAsync(long movieId);
 }

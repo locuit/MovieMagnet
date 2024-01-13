@@ -81,6 +81,8 @@ public class MovieWatchingService : MovieMagnetAppService, IMovieWatchingService
         queryable = queryable
             .OrderBy(input.Sorting ?? nameof(MovieWatching.MovieId))
             .Include(x => x.Movie)
+            .ThenInclude(x => x.Ratings)
+            .Include(x=>x.Movie)
             .ThenInclude(x => x.MovieGenres)
             .ThenInclude(x => x.Genre);
         var movies = await AsyncExecuter.ToListAsync(queryable.Skip(input.SkipCount)
@@ -88,6 +90,8 @@ public class MovieWatchingService : MovieMagnetAppService, IMovieWatchingService
         List<MovieDto> result = new() { };
         movies.ForEach(x =>
         {
+            decimal? movieRating =  x.Movie.Ratings is { Count: > 0 } ? x.Movie.Ratings.Average(r => r.Score) : null;
+
             result.Add(new MovieDto()
             {
                 Id = x.Movie.Id,
@@ -101,7 +105,7 @@ public class MovieWatchingService : MovieMagnetAppService, IMovieWatchingService
                 Popularity = x.Movie.Popularity,
                 Revenue = x.Movie.Revenue,
                 Runtime = x.Movie.Runtime,
-                VoteAverage = x.Movie.Ratings.Average(x => x.Score),
+                VoteAverage = movieRating,
                 VoteCount = x.Movie.VoteCount,
                 Genres = x.Movie.MovieGenres.Select(mg => mg.Genre.Name).ToArray(),
             });

@@ -232,7 +232,7 @@ public class RecommendationService : MovieMagnetAppService, IRecommendationServi
             Popularity = entry.Popularity,
             Revenue = entry.Revenue,
             Runtime = entry.Runtime,
-            VoteAverage = entry.VoteAverage,
+            VoteAverage = entry.Ratings.Average(mr => mr.Score),
             VoteCount = entry.VoteCount,
             Genres = entry.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
         }).ToList();

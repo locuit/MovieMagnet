@@ -26,7 +26,7 @@ public class Movie : Entity<long>
     public virtual ICollection<MovieCountry> MovieCountries { get; set; }
     public virtual ICollection<MovieGenre> MovieGenres { get; set; } = new List<MovieGenre>();
     
-    public virtual ICollection<Rating> Ratings { get; set; }
+    public virtual ICollection<Rating>? Ratings { get; set; }
 
     public virtual ICollection<UserWatchList> UserWatchList { get; set; }
     
