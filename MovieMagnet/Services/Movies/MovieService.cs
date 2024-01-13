@@ -28,7 +28,7 @@ public class MovieService : MovieMagnetAppService, IMovieService
 {
     var moviesQuery = _dbContext.Movies
         .Where(m =>
-            (string.IsNullOrEmpty(search) || m.Title.Contains(search)) &&
+            (string.IsNullOrEmpty(search) || m.Title.Contains(search) || m.Overview.Contains(search)) &&
             (genres == null || genres.Length == 0 ||
              m.MovieGenres.Any(mg => genres.Contains(mg.GenreId.ToString()))));
 
