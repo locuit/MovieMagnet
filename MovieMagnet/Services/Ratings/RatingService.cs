@@ -24,10 +24,10 @@ public class RatingService : MovieMagnetAppService, IRatingService
 
     [HttpGet("ratings")]
     [Authorize]
-    public async Task<RatingDto> GetAsync()
+    public async Task<RatingDto> GetAsync(long movieId)
     {
         var user = _httpContextAccessor.HttpContext?.Items["User"] as UserDto;
-        var rating = await _ratingRepository.FirstOrDefaultAsync(x => x.UserId == user.Id);
+        var rating = await _ratingRepository.FirstOrDefaultAsync(x => x.MovieId == movieId && x.UserId == user.Id);
 
         if (rating == null)
         {

@@ -5,6 +5,8 @@ using MovieMagnet.Entities;
 using MovieMagnet.Services.Dtos;
 using MovieMagnet.Services.Dtos.Watchlist;
 using System.Linq;
+using MovieMagnet.Data;
+using MovieMagnet.Services.Dtos.Movies;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Entities;
@@ -68,7 +70,8 @@ public class WatchlistService : MovieMagnetAppService, IWatchlistService
         UserDto? user = _httpContextAccessor.HttpContext?.Items["User"] as UserDto ?? throw new UserFriendlyException("User not found");
         var queryable = await _userWatchListRepository.WithDetailsAsync();
 
-        queryable = queryable.Where(x => x.UserId == user.Id).Include(x => x.Movie)
+        queryable = queryable.Where(x => x.UserId == user.Id)
+            .Include(x => x.Movie)
             .ThenInclude(x => x.MovieGenres)
             .ThenInclude(x => x.Genre);
 
@@ -76,7 +79,7 @@ public class WatchlistService : MovieMagnetAppService, IWatchlistService
 
         queryResult.ForEach(x =>
         {
-
+            decimal? movieRating =  x.Movie.Ratings is { Count: > 0 } ? x.Movie.Ratings.Average(r => r.Score) : null;
             result.Add(new MovieDto()
             {
                 Id = x.Movie.Id,
@@ -90,7 +93,7 @@ public class WatchlistService : MovieMagnetAppService, IWatchlistService
                 Popularity = x.Movie.Popularity,
                 Revenue = x.Movie.Revenue,
                 Runtime = x.Movie.Runtime,
-                VoteAverage = x.Movie.Ratings.Average(x => x.Score),
+                VoteAverage = movieRating,
                 VoteCount = x.Movie.VoteCount,
                 Genres = x.Movie.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
             });

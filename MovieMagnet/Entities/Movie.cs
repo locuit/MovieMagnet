@@ -1,10 +1,14 @@
-﻿using Volo.Abp.Domain.Entities;
+using System.ComponentModel.DataAnnotations;
+using Volo.Abp.Domain.Entities;
 
 namespace MovieMagnet.Entities;
 
 public class Movie : Entity<long>
 {
-    public decimal Budget { get; set; }
+    public float Budget { get; set; }
+    
+    [Required]
+    [MaxLength(255)]
     public required string Title { get; set; } 
     public string? Language { get; set; }
     public string? Overview { get; set; }
@@ -22,7 +26,7 @@ public class Movie : Entity<long>
     public virtual ICollection<MovieCountry> MovieCountries { get; set; }
     public virtual ICollection<MovieGenre> MovieGenres { get; set; } = new List<MovieGenre>();
     
-    public virtual ICollection<Rating> Ratings { get; set; }
+    public virtual ICollection<Rating>? Ratings { get; set; }
 
     public virtual ICollection<UserWatchList> UserWatchList { get; set; }
     

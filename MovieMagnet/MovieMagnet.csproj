@@ -9,11 +9,14 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Microsoft.Data.Analysis" Version="0.21.0" />
+    <PackageReference Include="Pandas.NET" Version="0.5.1" />
     <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
     <PackageReference Include="SciSharp.TensorFlow.Redist-Windows-GPU" Version="2.10.3" />
     <PackageReference Include="Serilog.AspNetCore" Version="5.0.0" />
     <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
-    <PackageReference Include="TensorFlow.NET" Version="0.150.0" />
+    <PackageReference Include="TensorFlow.Keras" Version="0.11.4" />
+    <PackageReference Include="TensorFlow.NET" Version="0.110.4" />
   </ItemGroup>
 
   <ItemGroup>
@@ -120,7 +123,6 @@
 
 
   </ItemGroup>
-
 
 
 

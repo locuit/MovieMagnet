@@ -5,7 +5,7 @@ namespace MovieMagnet.Services.Dtos.Movies;
 
 public interface IMovieService : IApplicationService
 {
-    Task<PagedResultDto<MovieDto>> GetListAsync(PagedAndSortedResultRequestDto input, string? search);
+    Task<PagedResultDto<MovieDto>> GetListAsync(PagedAndSortedResultRequestDto input, string? search, decimal? minRating, decimal? maxRating, string[]? genres);
     Task<MovieDto> GetAsync(long id);
     Task<MovieDto> CreateAsync(MovieDto input);
     Task<PagedResultDto<MovieDto>> GetMoviesByGenresAsync(long genresId, PagedAndSortedResultRequestDto input);

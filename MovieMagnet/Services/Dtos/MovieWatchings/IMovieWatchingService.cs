@@ -1,4 +1,5 @@
-﻿using Volo.Abp.Application.Dtos;
+﻿using MovieMagnet.Services.Dtos.Movies;
+using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 
 namespace MovieMagnet.Services.Dtos.MovieWatchings;

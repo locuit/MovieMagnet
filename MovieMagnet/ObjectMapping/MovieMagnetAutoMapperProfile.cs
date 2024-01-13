@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using MovieMagnet.Entities;
 using MovieMagnet.Services.Dtos;
+using MovieMagnet.Services.Dtos.Movies;
 
 namespace MovieMagnet.ObjectMapping;
 

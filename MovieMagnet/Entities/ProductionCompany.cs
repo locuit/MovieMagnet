@@ -1,4 +1,3 @@
-﻿using MovieMagnet.Entities;
 using Volo.Abp.Domain.Entities;
 
 namespace MovieMagnet.Entities;
