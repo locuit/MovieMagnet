@@ -24,46 +24,96 @@ public class MovieService : MovieMagnetAppService, IMovieService
         _dbContext = dbContext;
     }
 
-    public async Task<PagedResultDto<MovieDto>> GetListAsync(PagedAndSortedResultRequestDto input, string? search)
-    {
-        var movies = _dbContext.Movies
-            .Where(m =>
-                string.IsNullOrEmpty(search) ||
-                m.Title.Contains(search))
-            .OrderBy(input.Sorting ?? nameof(Movie.Title));
+    public async Task<PagedResultDto<MovieDto>> GetListAsync(PagedAndSortedResultRequestDto input, string? search, decimal? minRating, decimal? maxRating, string[]? genres)
+{
+    var moviesQuery = _dbContext.Movies
+        .Where(m =>
+            (string.IsNullOrEmpty(search) || m.Title.Contains(search)) &&
+            (genres == null || genres.Length == 0 ||
+             m.MovieGenres.Any(mg => genres.Contains(mg.GenreId.ToString()))));
 
-        var paginateMovie = await movies.Skip(input.SkipCount)
-            .Take(input.MaxResultCount)
-            .AsSplitQuery()
-            .Include(m => m.MovieGenres)
-            .ThenInclude(mg => mg.Genre)
-            .Include(m => m.Ratings)
-            .Select(entry => new MovieDto
-            {
-                Id = entry.Id,
-                Title = entry.Title,
-                Budget = entry.Budget,
-                Language = entry.Language,
-                Overview = entry.Overview,
-                PosterPath = entry.PosterPath,
-                ReleaseDate = entry.ReleaseDate,
-                ImdbId = entry.ImdbId,
-                Popularity = entry.Popularity,
-                Revenue = entry.Revenue,
-                Runtime = entry.Runtime,
-                VoteAverage = entry.Ratings.Average(mr => mr.Score),
-                VoteCount = entry.VoteCount,
-                Genres = entry.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
-            }).ToListAsync();
+    moviesQuery = ApplyRatingFilter(moviesQuery, minRating, maxRating);
 
-        var result = new PagedResultDto<MovieDto>
+    moviesQuery = moviesQuery.OrderBy(input.Sorting ?? nameof(Movie.Title));
+
+    var movies = await moviesQuery
+        .Skip(input.SkipCount)
+        .Take(input.MaxResultCount)
+        .AsSplitQuery()
+        .Include(m => m.MovieGenres)
+        .ThenInclude(mg => mg.Genre)
+        .Include(m => m.Ratings)
+        .Select(entry => new MovieDto
         {
-            TotalCount = await movies.CountAsync(),
-            Items = paginateMovie
-        };
+            Id = entry.Id,
+            Title = entry.Title,
+            Budget = entry.Budget,
+            Language = entry.Language,
+            Overview = entry.Overview,
+            PosterPath = entry.PosterPath,
+            ReleaseDate = entry.ReleaseDate,
+            ImdbId = entry.ImdbId,
+            Popularity = entry.Popularity,
+            Revenue = entry.Revenue,
+            Runtime = entry.Runtime,
+            VoteAverage = entry.Ratings.Average(mr => mr.Score),
+            VoteCount = entry.VoteCount,
+            Genres = entry.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
+        }).ToListAsync();
 
-        return result;
+    var result = new PagedResultDto<MovieDto>
+    {
+        TotalCount = movies.Count(),
+        Items = movies
+    };
+
+    return result;
+}
+
+    private IQueryable<Movie> ApplyRatingFilter(IQueryable<Movie> query, decimal? minRating, decimal? maxRating)
+    {
+        if (minRating.HasValue || maxRating.HasValue)
+        {
+            query = query.Where(m => m.Ratings.Any());
+        
+            if (minRating.HasValue)
+            {
+                query = query.Where(m => m.Ratings.Average(r => r.Score) >= minRating.Value);
+            }
+
+            if (maxRating.HasValue)
+            {
+                query = query.Where(m => m.Ratings.Average(r => r.Score) <= maxRating.Value);
+            }
+        }
+
+        return query;
     }
+
+
+
+    private static MovieDto MapToMovieDto(Movie entry)
+    {
+        return new MovieDto
+        {
+            Id = entry.Id,
+            Title = entry.Title,
+            Budget = entry.Budget,
+            Language = entry.Language,
+            Overview = entry.Overview,
+            PosterPath = entry.PosterPath,
+            ReleaseDate = entry.ReleaseDate,
+            ImdbId = entry.ImdbId,
+            Popularity = entry.Popularity,
+            Revenue = entry.Revenue,
+            Runtime = entry.Runtime,
+            VoteAverage = entry.Ratings.Any() ? entry.Ratings.Average(mr => mr.Score) : 0,
+            VoteCount = entry.VoteCount,
+            Genres = entry.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
+        };
+    }
+
+
 
 
     public async Task<MovieDto> GetAsync(long id)
