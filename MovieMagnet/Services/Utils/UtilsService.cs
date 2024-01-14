@@ -74,9 +74,12 @@ public class UtilsService : IUtilsService
 
     public async Task<Movie> SavePosterPathToDb(Movie movie)
     {
-        var posterPath = await GetPosterPath(movie.ImdbId!);
+        if (movie.PosterPath != null && !movie.PosterPath.Contains("https"))
+        {
+            var posterPath = await GetPosterPath(movie.ImdbId!);
 
-        movie.PosterPath = posterPath;
+            movie.PosterPath = posterPath;
+        }
 
         return movie;
     }
