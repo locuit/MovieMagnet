@@ -7,6 +7,7 @@ using MovieMagnet.Entities;
 using MovieMagnet.Services.Dtos;
 using MovieMagnet.Services.Dtos.Movies;
 using MovieMagnet.Services.Dtos.MovieWatchings;
+using MovieMagnet.Services.Utils;
 using OneOf.Types;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
@@ -87,10 +88,46 @@ public class MovieWatchingService : MovieMagnetAppService, IMovieWatchingService
             .ThenInclude(x => x.Genre);
         var movies = await AsyncExecuter.ToListAsync(queryable.Skip(input.SkipCount)
             .Take(input.MaxResultCount));
+
+        var utils = new UtilsService();
+
+        var listTask = new List<Task>();
+        var moviePosters = new Dictionary<string, string>();
+
+        foreach (var movie in movies)
+        {
+            if (movie.Movie.PosterPath != null && !movie.Movie.PosterPath.Contains("https"))
+            {
+                listTask.Add(utils.GetPosterPath(movie.Movie.ImdbId!)
+                .ContinueWith(posterTask =>
+                {
+                    // Ensure the posterTask is completed successfully
+                    if (posterTask.Status == TaskStatus.RanToCompletion)
+                    {
+                        moviePosters[movie.Movie.ImdbId!] = posterTask.Result;
+                    }
+                }));
+            }
+        }
+
+        await Task.WhenAll(listTask);
+
+        // Map the poster paths back to the original movies
+        foreach (var movie in movies)
+        {
+            // Retrieve the poster path from the dictionary using IMDb ID
+            if (moviePosters.TryGetValue(movie.Movie.ImdbId!, out var posterPath))
+            {
+                // Assign the poster path to the original movie
+                movie.Movie.PosterPath = posterPath;
+            }
+        }
+
         List<MovieDto> result = new() { };
         movies.ForEach(x =>
         {
             decimal? movieRating =  x.Movie.Ratings is { Count: > 0 } ? x.Movie.Ratings.Average(r => r.Score) : null;
+            int movieRatingCount = x.Movie.Ratings is { Count: > 0 } ? x.Movie.Ratings.Count() : 0;
 
             result.Add(new MovieDto()
             {
@@ -106,7 +143,7 @@ public class MovieWatchingService : MovieMagnetAppService, IMovieWatchingService
                 Revenue = x.Movie.Revenue,
                 Runtime = x.Movie.Runtime,
                 VoteAverage = movieRating,
-                VoteCount = x.Movie.VoteCount,
+                VoteCount = movieRatingCount,
                 Genres = x.Movie.MovieGenres.Select(mg => mg.Genre.Name).ToArray(),
             });
         });

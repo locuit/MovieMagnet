@@ -19,7 +19,6 @@ public class MovieDto : EntityDto<long>
     public decimal Runtime { get; set; }
     public decimal? VoteAverage { get; set; }
     public int VoteCount { get; set; }
-
     public string[] Genres { get; set; }
 }
 

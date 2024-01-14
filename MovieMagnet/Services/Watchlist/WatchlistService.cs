@@ -12,6 +12,7 @@ using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Validation;
+using MovieMagnet.Services.Utils;
 
 namespace MovieMagnet.Services.Watchlist;
 
@@ -36,12 +37,13 @@ public class WatchlistService : MovieMagnetAppService, IWatchlistService
 
         var movie = await _movieRepository.FirstOrDefaultAsync(x => x.Id == movieId);
 
-        if(movie == null) { throw new EntityNotFoundException("Movie not found"); }
+        if (movie == null) { throw new EntityNotFoundException("Movie not found"); }
 
 
         var watchlistMovie = await _userWatchListRepository.FirstOrDefaultAsync(_ => _.MovieId == movieId);
 
-        if(watchlistMovie != null) {
+        if (watchlistMovie != null)
+        {
             throw new AbpValidationException("You already add this to watchlist");
         }
 
@@ -54,7 +56,7 @@ public class WatchlistService : MovieMagnetAppService, IWatchlistService
     {
         UserDto? user = _httpContextAccessor.HttpContext?.Items["User"] as UserDto ?? throw new UserFriendlyException("User not found");
 
-        var movie = await _userWatchListRepository.FirstOrDefaultAsync(x => x.MovieId ==  movieId);
+        var movie = await _userWatchListRepository.FirstOrDefaultAsync(x => x.MovieId == movieId);
 
         if (movie == null) { throw new EntityNotFoundException("You not add this movie to your watchlist yet."); }
 
@@ -72,14 +74,55 @@ public class WatchlistService : MovieMagnetAppService, IWatchlistService
 
         queryable = queryable.Where(x => x.UserId == user.Id)
             .Include(x => x.Movie)
+            .ThenInclude(m => m.Ratings)
+            .Include(x => x.Movie)
             .ThenInclude(x => x.MovieGenres)
             .ThenInclude(x => x.Genre);
 
-        var queryResult = await AsyncExecuter.ToListAsync(queryable.Skip(input.SkipCount).Take(input.MaxResultCount));
 
-        queryResult.ForEach(x =>
+        var movies = await AsyncExecuter.ToListAsync(queryable.Skip(input.SkipCount).Take(input.MaxResultCount));
+
+        var utils = new UtilsService();
+
+        var listTask = new List<Task>();
+        var moviePosters = new Dictionary<string, string>();
+
+        foreach (var movie in movies)
         {
-            decimal? movieRating =  x.Movie.Ratings is { Count: > 0 } ? x.Movie.Ratings.Average(r => r.Score) : null;
+            if (movie.Movie.PosterPath != null && !movie.Movie.PosterPath.Contains("https"))
+            {
+                listTask.Add(utils.GetPosterPath(movie.Movie.ImdbId!)
+                .ContinueWith(posterTask =>
+                {
+                    // Ensure the posterTask is completed successfully
+                    if (posterTask.Status == TaskStatus.RanToCompletion)
+                    {
+                        moviePosters[movie.Movie.ImdbId!] = posterTask.Result;
+                    }
+                }));
+            }
+        }
+
+        await Task.WhenAll(listTask);
+
+        // Map the poster paths back to the original movies
+        foreach (var movie in movies)
+        {
+            // Retrieve the poster path from the dictionary using IMDb ID
+            if (moviePosters.TryGetValue(movie.Movie.ImdbId!, out var posterPath))
+            {
+                // Assign the poster path to the original movie
+                movie.Movie.PosterPath = posterPath;
+            }
+        }
+
+
+        movies.ForEach(x =>
+        {
+            decimal? movieRating = x.Movie.Ratings is { Count: > 0 } ? x.Movie.Ratings.Average(r => r.Score) : null;
+            int movieRatingCount = x.Movie.Ratings is { Count: > 0 } ? x.Movie.Ratings.Count() : 0;
+
+
             result.Add(new MovieDto()
             {
                 Id = x.Movie.Id,
@@ -94,7 +137,7 @@ public class WatchlistService : MovieMagnetAppService, IWatchlistService
                 Revenue = x.Movie.Revenue,
                 Runtime = x.Movie.Runtime,
                 VoteAverage = movieRating,
-                VoteCount = x.Movie.VoteCount,
+                VoteCount = movieRatingCount,
                 Genres = x.Movie.MovieGenres.Select(mg => mg.Genre.Name).ToArray()
             });
         });
